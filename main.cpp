@@ -8,11 +8,13 @@
 #include <filesystem>
 #include "src/graph.h"
 #include <SFML/Graphics.hpp>
-#include <unordered_map>
-#include <vector>
-#include <utility>
-#include <string>
-#include <stdexcept>
+#include <limits>
+
+// Estructura para almacenar coordenadas normalizadas
+struct NormalizedNode {
+    sf::Vector2f position;
+    NormalizedNode(float x, float y) : position(x, y) {}
+};
 
 // Función para encontrar el rango de latitudes y longitudes
 void findMinMaxLatLon(const Graph& graph, float& minLat, float& maxLat, float& minLon, float& maxLon) {
@@ -39,7 +41,15 @@ sf::Vector2f normalizeCoordinates(float lat, float lon, float minLat, float maxL
     return sf::Vector2f(x, height - y); // Invertir y para que el mapa no esté al revés
 }
 
-void drawGraph(sf::RenderWindow& window, const Graph& graph, float minLat, float maxLat, float minLon, float maxLon, float width, float height) {
+// Función para pre-calcular coordenadas normalizadas
+void precomputeNormalizedCoordinates(const Graph& graph, std::vector<NormalizedNode>& normalizedNodes, float minLat, float maxLat, float minLon, float maxLon, float width, float height) {
+    for (const auto& node : graph.nodes) {
+        sf::Vector2f pos = normalizeCoordinates(std::stof(node.lat), std::stof(node.lon), minLat, maxLat, minLon, maxLon, width, height);
+        normalizedNodes.emplace_back(pos.x, pos.y);
+    }
+}
+
+void drawGraph(sf::RenderWindow& window, const Graph& graph, const std::vector<NormalizedNode>& normalizedNodes) {
     sf::VertexArray lines(sf::Lines);
     sf::VertexArray nodes(sf::Points);
 
@@ -47,21 +57,18 @@ void drawGraph(sf::RenderWindow& window, const Graph& graph, float minLat, float
         int source = edge.source;
         int target = edge.target;
 
-        sf::Vector2f pos1 = normalizeCoordinates(std::stof(graph.nodes[source].lat), std::stof(graph.nodes[source].lon), minLat, maxLat, minLon, maxLon, width, height);
-        sf::Vector2f pos2 = normalizeCoordinates(std::stof(graph.nodes[target].lat), std::stof(graph.nodes[target].lon), minLat, maxLat, minLon, maxLon, width, height);
-
-        lines.append(sf::Vertex(pos1));
-        lines.append(sf::Vertex(pos2));
+        lines.append(sf::Vertex(normalizedNodes[source].position));
+        lines.append(sf::Vertex(normalizedNodes[target].position));
     }
 
-    for (const auto& node : graph.nodes) {
-        sf::Vector2f pos = normalizeCoordinates(std::stof(node.lat), std::stof(node.lon), minLat, maxLat, minLon, maxLon, width, height);
-        nodes.append(sf::Vertex(pos, sf::Color::Red));
+    for (const auto& node : normalizedNodes) {
+        nodes.append(sf::Vertex(node.position, sf::Color::Red));
     }
 
     window.draw(lines);
     window.draw(nodes);
 }
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Mapa Interactivo");
 
@@ -71,6 +78,9 @@ int main() {
 
     float minLat, maxLat, minLon, maxLon;
     findMinMaxLatLon(graph, minLat, maxLat, minLon, maxLon);
+
+    std::vector<NormalizedNode> normalizedNodes;
+    precomputeNormalizedCoordinates(graph, normalizedNodes, minLat, maxLat, minLon, maxLon, window.getSize().x, window.getSize().y);
 
     sf::View view = window.getDefaultView();
     sf::Clock clock;
@@ -134,7 +144,7 @@ int main() {
         fpsText.setString("FPS: " + std::to_string(static_cast<int>(fps)));
 
         window.clear(sf::Color::Black);
-        drawGraph(window, graph, minLat, maxLat, minLon, maxLon, window.getSize().x, window.getSize().y);
+        drawGraph(window, graph, normalizedNodes);
 
         // Restablecer la vista a la vista por defecto antes de dibujar el texto
         window.setView(window.getDefaultView());
