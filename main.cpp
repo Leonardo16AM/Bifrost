@@ -9,6 +9,7 @@
 #include "src/graph.h"
 #include <SFML/Graphics.hpp>
 #include <limits>
+#include <cmath> // Para std::sqrt y std::pow
 
 // Estructura para almacenar coordenadas normalizadas
 struct NormalizedNode {
@@ -51,7 +52,7 @@ void precomputeNormalizedCoordinates(const Graph& graph, std::vector<NormalizedN
 
 void drawGraph(sf::RenderWindow& window, const Graph& graph, const std::vector<NormalizedNode>& normalizedNodes) {
     sf::VertexArray lines(sf::Lines);
-    sf::VertexArray nodes(sf::Points);
+    sf::VertexArray nodes(sf::Quads);
 
     for (const auto& edge : graph.edges) {
         int source = edge.source;
@@ -61,16 +62,43 @@ void drawGraph(sf::RenderWindow& window, const Graph& graph, const std::vector<N
         lines.append(sf::Vertex(normalizedNodes[target].position));
     }
 
+    float nodeSize = 0.1f; // Tamaño del nodo
+
     for (const auto& node : normalizedNodes) {
-        nodes.append(sf::Vertex(node.position, sf::Color::Red));
+        sf::Vector2f pos = node.position;
+
+        nodes.append(sf::Vertex(pos + sf::Vector2f(-nodeSize / 2, -nodeSize / 2), sf::Color::Red));
+        nodes.append(sf::Vertex(pos + sf::Vector2f(nodeSize / 2, -nodeSize / 2), sf::Color::Red));
+        nodes.append(sf::Vertex(pos + sf::Vector2f(nodeSize / 2, nodeSize / 2), sf::Color::Red));
+        nodes.append(sf::Vertex(pos + sf::Vector2f(-nodeSize / 2, nodeSize / 2), sf::Color::Red));
     }
 
     window.draw(lines);
     window.draw(nodes);
 }
 
+
+// Función para calcular la distancia euclidiana
+float euclideanDistance(const sf::Vector2f& a, const sf::Vector2f& b) {
+    return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
+}
+
+void drawTextWithOutline(sf::RenderWindow& window, sf::Text& text, sf::Color outlineColor, float thickness = 2.f) {
+    sf::Text outline = text;
+    outline.setFillColor(outlineColor);
+    for (int dx = -1; dx <= 1; ++dx) {
+        for (int dy = -1; dy <= 1; ++dy) {
+            if (dx != 0 || dy != 0) {
+                outline.setPosition(text.getPosition().x + dx * thickness, text.getPosition().y + dy * thickness);
+                window.draw(outline);
+            }
+        }
+    }
+    window.draw(text);
+}
+
 int main() {
-    sf::RenderWindow window(sf::VideoMode(1600, 900), "Mapa Interactivo");
+    sf::RenderWindow window(sf::VideoMode(1600, 900), "Bifrost - Interactive Simulation");
 
     std::string nodes_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_nodes.csv"; 
     std::string edges_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_edges.csv"; 
@@ -80,7 +108,7 @@ int main() {
     findMinMaxLatLon(graph, minLat, maxLat, minLon, maxLon);
 
     std::vector<NormalizedNode> normalizedNodes;
-    precomputeNormalizedCoordinates(graph, normalizedNodes, minLat, maxLat, minLon, maxLon, window.getSize().x, window.getSize().y);
+    precomputeNormalizedCoordinates(graph, normalizedNodes, minLat, maxLat, minLon, maxLon, window.getSize().x - 200, window.getSize().y); // Dejar espacio para la barra de logs
 
     sf::View view = window.getDefaultView();
     sf::Clock clock;
@@ -94,8 +122,26 @@ int main() {
     fpsText.setFillColor(sf::Color::White);
     fpsText.setPosition(10, 10);
 
+    sf::Text nodeIdText;
+    nodeIdText.setFont(font);
+    nodeIdText.setCharacterSize(20);
+    nodeIdText.setFillColor(sf::Color::White);
+    nodeIdText.setPosition(10, window.getSize().y - 30);
+
+    sf::RectangleShape logBar(sf::Vector2f(250, window.getSize().y));
+    logBar.setFillColor(sf::Color(70, 70, 75));
+    logBar.setPosition(window.getSize().x - 250, 0);
+
+    
+    sf::Text logText;
+    logText.setFont(font);
+    logText.setCharacterSize(18);
+    logText.setFillColor(sf::Color::White);
+    logText.setPosition(window.getSize().x - 240, 10);
+
     bool dragging = false;
     sf::Vector2i oldMousePos;
+    int selectedNodeId = -1;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -113,6 +159,14 @@ int main() {
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                 dragging = true;
                 oldMousePos = sf::Mouse::getPosition(window);
+
+                sf::Vector2f worldPos = window.mapPixelToCoords(oldMousePos);
+                for (size_t i = 0; i < normalizedNodes.size(); ++i) {
+                    if (euclideanDistance(worldPos, normalizedNodes[i].position) < 0.3) { // Aumentar el radio de selección
+                        selectedNodeId = i;
+                        break;
+                    }
+                }
             }
             if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
                 dragging = false;
@@ -143,12 +197,30 @@ int main() {
         float fps = 1.f / clock.restart().asSeconds();
         fpsText.setString("FPS: " + std::to_string(static_cast<int>(fps)));
 
-        window.clear(sf::Color::Black);
+        if (selectedNodeId != -1) {
+            nodeIdText.setString("Node ID: " + std::to_string(selectedNodeId));
+        }
+
+        // Actualizar el texto de los logs
+        logText.setString("Nodes: " + std::to_string(graph.nodes.size()) + "\n" +
+                          "Edges: " + std::to_string(graph.edges.size()) + "\n" +
+                          "People: 50000\n" +
+                          "Day: 7\n" +
+                          "Hour: 9:41\n" +
+                          "Avg Walked: 1.32 km\n" +
+                          "Avg Travel Time: 45.5 min");
+       
+        window.clear(sf::Color(50, 50, 55));
         drawGraph(window, graph, normalizedNodes);
 
         // Restablecer la vista a la vista por defecto antes de dibujar el texto
         window.setView(window.getDefaultView());
-        window.draw(fpsText);
+        drawTextWithOutline(window, fpsText, sf::Color::Black);
+        drawTextWithOutline(window, nodeIdText, sf::Color::Black);
+
+        // Dibujar la barra de logs y el texto de los logs
+        window.draw(logBar);
+        window.draw(logText);
 
         // Volver a la vista del mapa
         window.setView(view);
