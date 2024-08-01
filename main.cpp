@@ -6,11 +6,25 @@
 #include <string>
 #include <algorithm>
 #include <filesystem>
-#include "src/graph.h"
-#include "src/route.h"
 #include <SFML/Graphics.hpp>
 #include <limits>
-#include <cmath> // Para std::sqrt y std::pow
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include "src/graph.h"
+#include "src/route.h"
+#include "src/person.h" 
+
+#include <windows.h>
+#include <dwmapi.h>
+#pragma comment(lib, "Dwmapi.lib")
+
+void setWindowTitleBarColor(sf::RenderWindow& window, COLORREF color) {
+    HWND hwnd = window.getSystemHandle();
+    
+    // Establece el color de la barra de título para Windows 10 y posteriores
+    DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, &color, sizeof(color));
+}
 
 // Estructura para almacenar coordenadas normalizadas
 struct NormalizedNode {
@@ -22,14 +36,26 @@ void findMinMaxLatLon(const Graph& graph, float& minLat, float& maxLat, float& m
 sf::Vector2f normalizeCoordinates(float lat, float lon, float minLat, float maxLat, float minLon, float maxLon, float width, float height);
 void precomputeNormalizedCoordinates(const Graph& graph, std::vector<NormalizedNode>& normalizedNodes, float minLat, float maxLat, float minLon, float maxLon, float width, float height);
 void drawGraph(sf::RenderWindow& window, const Graph& graph, const std::vector<NormalizedNode>& normalizedNodes);
+void drawPeople(sf::RenderWindow& window, const std::vector<Person>& people, const std::vector<NormalizedNode>& normalizedNodes);
 float euclideanDistance(const sf::Vector2f& a, const sf::Vector2f& b);
 void drawTextWithOutline(sf::RenderWindow& window, sf::Text& text, sf::Color outlineColor, float thickness = 2.f);
 
 void drawRoutes(sf::RenderWindow& window, const std::vector<Route>& routes, const std::vector<NormalizedNode>& normalizedNodes);
 void displayRouteProperties(sf::RenderWindow& window, const Route& route, const sf::Font& font, float windowWidth);
 
+
+void generatePeople(std::vector<Person>& people, const Graph& graph, int numPeople);
 int main() {
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Bifrost - Interactive Simulation");
+
+    sf::Image icon;
+    if (!icon.loadFromFile("assets/icon.png")) {
+        return -1; // Manejar error de carga del icono
+    }
+    window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+
+    // Cambiar el color de la barra de título
+    setWindowTitleBarColor(window, RGB(20, 20, 26));
 
     std::string nodes_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_nodes.csv"; 
     std::string edges_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_edges.csv"; 
@@ -39,7 +65,7 @@ int main() {
     };
 
     std::vector<int> stops = {375, 21249, 1205, 1214, 1226, 1235, 16905, 1165, 1145, 1123, 1117, 1098, 1084, 1073, 17136};
-    Route p5("P5",stops,stops,3,323);
+    Route p5("P5", stops, stops, 3, 323);
     routes.push_back(p5);
 
     float minLat, maxLat, minLon, maxLon;
@@ -67,7 +93,7 @@ int main() {
     nodeIdText.setPosition(10, window.getSize().y - 30);
 
     sf::RectangleShape logBar(sf::Vector2f(250, window.getSize().y));
-    logBar.setFillColor(sf::Color(70, 70, 75));
+    logBar.setFillColor(sf::Color(20, 20, 26));
     logBar.setPosition(window.getSize().x - 250, 0);
 
     sf::Text logText;
@@ -80,6 +106,9 @@ int main() {
     sf::Vector2i oldMousePos;
     int selectedNodeId = -1;
     int selectedRouteId = -1;
+
+    std::vector<Person> people;
+    generatePeople(people, graph, 10000); // Generar 10,000 personas
 
     while (window.isOpen()) {
         sf::Event event;
@@ -107,7 +136,7 @@ int main() {
                 }
 
                 for (size_t i = 0; i < routes.size(); ++i) {
-                    for (const auto& stop : routes[i].get_stops()) {
+                    for (const auto& stop : routes[i].stops) {
                         if (euclideanDistance(worldPos, normalizedNodes[stop].position) < 0.5) {
                             selectedRouteId = i;
                             break;
@@ -151,15 +180,20 @@ int main() {
         // Actualizar el texto de los logs
         logText.setString("Nodes: " + std::to_string(graph.nodes.size()) + "\n" +
                           "Edges: " + std::to_string(graph.edges.size()) + "\n" +
-                          "People: 50000\n" +
+                          "People: " + std::to_string(people.size()) + "\n" +
                           "Day: 7\n" +
                           "Hour: 9:41\n" +
                           "Avg Walked: 1.32 km\n" +
                           "Avg Travel Time: 45.5 min");
 
-        window.clear(sf::Color(30, 30, 35));
+        window.clear(sf::Color(26, 38, 54));
         drawGraph(window, graph, normalizedNodes);
         drawRoutes(window, routes, normalizedNodes);
+        drawPeople(window, people, normalizedNodes);
+
+        for (auto& person : people) {
+            person.move(1.0f); // Mover a cada persona (ajusta el tiempo según sea necesario)
+        }
 
         window.setView(window.getDefaultView());
         drawTextWithOutline(window, fpsText, sf::Color::Black);
@@ -178,6 +212,7 @@ int main() {
 
     return 0;
 }
+
 
 void findMinMaxLatLon(const Graph& graph, float& minLat, float& maxLat, float& minLon, float& maxLon) {
     minLat = std::numeric_limits<float>::max();
@@ -210,15 +245,38 @@ void precomputeNormalizedCoordinates(const Graph& graph, std::vector<NormalizedN
 }
 
 void drawGraph(sf::RenderWindow& window, const Graph& graph, const std::vector<NormalizedNode>& normalizedNodes) {
-    sf::VertexArray lines(sf::Lines);
+    sf::VertexArray lines(sf::Quads);
+    sf::VertexArray borders(sf::Quads);
     sf::VertexArray nodes(sf::Quads);
+
+    float borderThickness = 1.5f; // Grosor del borde
+    float lineThickness = borderThickness * 2 / 3; // Grosor de la línea original
 
     for (const auto& edge : graph.edges) {
         int source = edge.source;
         int target = edge.target;
 
-        lines.append(sf::Vertex(normalizedNodes[source].position));
-        lines.append(sf::Vertex(normalizedNodes[target].position));
+        sf::Vector2f sourcePos = normalizedNodes[source].position;
+        sf::Vector2f targetPos = normalizedNodes[target].position;
+
+        sf::Vector2f direction = targetPos - sourcePos;
+        sf::Vector2f unitDirection = direction / std::sqrt(direction.x * direction.x + direction.y * direction.y);
+        sf::Vector2f perpendicular(-unitDirection.y, unitDirection.x);
+
+        sf::Vector2f borderOffset = perpendicular * borderThickness / 2.0f;
+        sf::Vector2f lineOffset = perpendicular * lineThickness / 2.0f;
+
+        // Añadir borde negro
+        borders.append(sf::Vertex(sourcePos - borderOffset, sf::Color::Black));
+        borders.append(sf::Vertex(sourcePos + borderOffset, sf::Color::Black));
+        borders.append(sf::Vertex(targetPos + borderOffset, sf::Color::Black));
+        borders.append(sf::Vertex(targetPos - borderOffset, sf::Color::Black));
+
+        // Añadir línea original
+        lines.append(sf::Vertex(sourcePos - lineOffset, sf::Color(67, 86, 108)));
+        lines.append(sf::Vertex(sourcePos + lineOffset, sf::Color(67, 86, 108)));
+        lines.append(sf::Vertex(targetPos + lineOffset, sf::Color(67, 86, 108)));
+        lines.append(sf::Vertex(targetPos - lineOffset, sf::Color(67, 86, 108)));
     }
 
     float nodeSize = 0.1f;
@@ -232,8 +290,31 @@ void drawGraph(sf::RenderWindow& window, const Graph& graph, const std::vector<N
         nodes.append(sf::Vertex(pos + sf::Vector2f(-nodeSize / 2, nodeSize / 2), sf::Color::Red));
     }
 
+    // Dibujar primero los bordes
+    window.draw(borders);
+    // Dibujar las líneas originales
     window.draw(lines);
+    // Dibujar los nodos
     window.draw(nodes);
+}
+
+
+
+void drawPeople(sf::RenderWindow& window, const std::vector<Person>& people, const std::vector<NormalizedNode>& normalizedNodes) {
+    sf::VertexArray personQuads(sf::Quads);
+
+    float personSize = 0.2f; // Tamaño del cuadro que representa a una persona
+
+    for (const auto& person : people) {
+        sf::Vector2f pos = normalizedNodes[person.current_position.node_id].position;
+
+        personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, -personSize / 2), sf::Color::Blue));
+        personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, -personSize / 2), sf::Color::Blue));
+        personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, personSize / 2), sf::Color::Blue));
+        personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, personSize / 2), sf::Color::Blue));
+    }
+
+    window.draw(personQuads);
 }
 
 float euclideanDistance(const sf::Vector2f& a, const sf::Vector2f& b) {
@@ -256,8 +337,8 @@ void drawTextWithOutline(sf::RenderWindow& window, sf::Text& text, sf::Color out
 
 void drawRoutes(sf::RenderWindow& window, const std::vector<Route>& routes, const std::vector<NormalizedNode>& normalizedNodes) {
     for (const auto& route : routes) {
-        const auto& stops = route.get_stops();
-        sf::Color routeColor = route.get_color();
+        const auto& stops = route.stops;
+        sf::Color routeColor = route.color;
         float lineWidth = 0.5f; // Ancho de la línea
 
         for (size_t i = 0; i < stops.size() - 1; ++i) {
@@ -278,7 +359,6 @@ void drawRoutes(sf::RenderWindow& window, const std::vector<Route>& routes, cons
     }
 }
 
-
 void displayRouteProperties(sf::RenderWindow& window, const Route& route, const sf::Font& font, float windowWidth) {
     sf::Text routeText;
     routeText.setFont(font);
@@ -286,9 +366,21 @@ void displayRouteProperties(sf::RenderWindow& window, const Route& route, const 
     routeText.setFillColor(sf::Color::White);
     routeText.setPosition(windowWidth - 240, 800);
 
-    routeText.setString("Route ID: " + route.get_id() + "\n" +
-                        "Distance: " + std::to_string(route.get_total_distance()) + " km\n" +
-                        "Buses: " + std::to_string(route.get_bus_count()));
+    routeText.setString("Route ID: " + route.id + "\n" +
+                        "Distance: " + std::to_string(route.total_distance) + " km\n" +
+                        "Buses: " + std::to_string(route.bus_count));
 
     drawTextWithOutline(window, routeText, sf::Color::Black);
+}
+
+void generatePeople(std::vector<Person>& people, const Graph& graph, int numPeople) {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
+    for (int i = 0; i < numPeople; ++i) {
+        int home_node_id = std::rand() % graph.nodes.size();
+        int work_node_id = std::rand() % graph.nodes.size();
+        std::string name = "Person_" + std::to_string(i);
+
+        people.emplace_back(name, home_node_id, work_node_id);
+    }
 }
