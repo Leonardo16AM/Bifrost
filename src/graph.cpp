@@ -27,6 +27,99 @@ bool file_exists_and_readable(const std::string& filename) {
     return file.good();
 }
 
+
+void Graph::calculate_betweenness_centrality() {
+    std::vector<double> betweenness(nodes.size(), 0.0);
+    
+    for (size_t s = 0; s < nodes.size(); ++s) {
+        std::stack<int> S;
+        std::vector<std::vector<int>> P(nodes.size());
+        std::vector<int> sigma(nodes.size(), 0);
+        std::vector<int> d(nodes.size(), -1);
+        std::queue<int> Q;
+        
+        sigma[s] = 1;
+        d[s] = 0;
+        Q.push(s);
+        
+        while (!Q.empty()) {
+            int v = Q.front(); Q.pop();
+            S.push(v);
+            
+            for (const auto& neighbor : adj_list[v]) {
+                int w = neighbor.first;
+                
+                if (d[w] < 0) {
+                    Q.push(w);
+                    d[w] = d[v] + 1;
+                }
+                
+                if (d[w] == d[v] + 1) {
+                    sigma[w] += sigma[v];
+                    P[w].push_back(v);
+                }
+            }
+        }
+        
+        std::vector<double> delta(nodes.size(), 0.0);
+        
+        while (!S.empty()) {
+            int w = S.top(); S.pop();
+            for (int v : P[w]) {
+                delta[v] += (static_cast<double>(sigma[v]) / sigma[w]) * (1.0 + delta[w]);
+            }
+            if (w != s) {
+                betweenness[w] += delta[w];
+            }
+        }
+    }
+    
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        nodes[i].betweenness_centrality = betweenness[i];
+    }
+    save_betweenness_to_csv("maps/betweenness.csv");
+}
+
+void Graph::save_betweenness_to_csv(const std::string& filename) const {
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        file << "id,betweenness_centrality\n";
+        for (const auto& node : nodes) {
+            file << node.id << "," << node.betweenness_centrality << "\n";
+        }
+        file.close();
+    } else {
+        std::cerr << "Error opening file for writing: " << filename << "\n";
+    }
+}
+
+
+void Graph::load_betweenness_from_csv(const std::string& filename) {
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        std::string line;
+        std::getline(file, line); // Leer encabezado
+        while (std::getline(file, line)) {
+            std::istringstream iss(line);
+            std::string id_str, centrality_str;
+            if (std::getline(iss, id_str, ',') && std::getline(iss, centrality_str, ',')) {
+                int id = std::stoi(id_str);
+                double centrality = std::stod(centrality_str);
+                auto it = std::find_if(nodes.begin(), nodes.end(), [id](const Node& node) {
+                    return node.id == id;
+                });
+                if (it != nodes.end()) {
+                    it->betweenness_centrality = centrality;
+                }
+            }
+        }
+        file.close();
+    } else {
+        std::cerr << "Error opening file for reading: " << filename << "\n";
+    }
+}
+
+
 std::vector<Node> read_nodes(const std::string& filename, std::unordered_map<long long, int>& node_map) {
     std::vector<Node> nodes;
     std::ifstream file(filename);
@@ -143,4 +236,86 @@ Graph build_map(const std::string& nodesfile, const std::string& edgesfile) {
 
     Graph G = Graph(nodes, edges);
     return G;
+}
+
+
+
+std::vector<int> Graph::a_star(int start_id, int goal_id) const {
+    // Verificar si los nodos de inicio y meta existen
+    if (start_id < 0 || start_id >= nodes.size() || goal_id < 0 || goal_id >= nodes.size()) {
+        std::cerr << "Error: Nodo de inicio o meta no existe en el mapa." << std::endl;
+        return {};
+    }
+
+    std::unordered_set<int> closed_set;
+    std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, std::greater<>> open_set;
+    std::unordered_map<int, int> came_from;
+    std::unordered_map<int, double> g_score;
+    std::unordered_map<int, double> f_score;
+
+    for (const auto& node : nodes) {
+        g_score[node.id] = std::numeric_limits<double>::infinity();
+        f_score[node.id] = std::numeric_limits<double>::infinity();
+    }
+
+    g_score[start_id] = 0.0;
+    f_score[start_id] = heuristic(start_id, goal_id);
+    open_set.emplace(f_score[start_id], start_id);
+
+    while (!open_set.empty()) {
+        int current = open_set.top().second;
+        open_set.pop();
+
+        if (current == goal_id) {
+            std::vector<int> path;
+            while (came_from.find(current) != came_from.end()) {
+                path.push_back(current);
+                current = came_from[current];
+            }
+            path.push_back(start_id);
+            std::reverse(path.begin(), path.end());
+            return path;
+        }
+
+        closed_set.insert(current);
+
+        // Verificar si el nodo actual tiene vecinos en el mapa
+        if (adj_list.find(current) == adj_list.end()) continue;
+
+        for (const auto& [neighbor, length] : adj_list.at(current)) {
+            if (closed_set.find(neighbor) != closed_set.end()) continue;
+
+            double tentative_g_score = g_score[current] + length;
+            if (tentative_g_score < g_score[neighbor]) {
+                came_from[neighbor] = current;
+                g_score[neighbor] = tentative_g_score;
+                f_score[neighbor] = g_score[neighbor] + heuristic(neighbor, goal_id);
+
+                // Evitar agregar el mismo nodo nuevamente si ya está en el conjunto abierto con un mejor costo
+                bool in_open_set = false;
+                auto tmp_queue = open_set; // Crear una copia temporal para buscar
+                while (!tmp_queue.empty()) {
+                    if (tmp_queue.top().second == neighbor) {
+                        in_open_set = true;
+                        break;
+                    }
+                    tmp_queue.pop();
+                }
+                
+                if (!in_open_set)
+                    open_set.emplace(f_score[neighbor], neighbor);
+            }
+        }
+    }
+
+    std::cerr << "No se encontró un camino." << std::endl;
+    return {}; // Retornar un camino vacío si no se encuentra una ruta
+}
+
+double Graph::heuristic(int node_id1, int node_id2) const {
+    auto lat1 = std::stod(nodes[node_id1].lat);
+    auto lon1 = std::stod(nodes[node_id1].lon);
+    auto lat2 = std::stod(nodes[node_id2].lat);
+    auto lon2 = std::stod(nodes[node_id2].lon);
+    return std::sqrt(std::pow(lat2 - lat1, 2) + std::pow(lon2 - lon1, 2));
 }
