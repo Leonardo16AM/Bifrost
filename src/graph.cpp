@@ -319,3 +319,60 @@ double Graph::heuristic(int node_id1, int node_id2) const {
     auto lon2 = std::stod(nodes[node_id2].lon);
     return std::sqrt(std::pow(lat2 - lat1, 2) + std::pow(lon2 - lon1, 2));
 }
+
+
+
+std::unordered_map<int, std::pair<int, double>> Graph::dijkstra(int start_id, const std::unordered_set<int>& visitable_nodes) const {
+    std::unordered_map<int, std::pair<int, double>> results; // nodo -> (nodo previo, distancia mínima)
+    std::set<std::pair<double, int>> queue; // (distancia, nodo)
+
+    // Inicializar las distancias a infinito y el nodo previo a -1
+    for (int node_id : visitable_nodes) {
+        results[node_id] = {-1, std::numeric_limits<double>::infinity()};
+    }
+    results[start_id] = {-1, 0};
+    queue.insert({0, start_id});
+
+    while (!queue.empty()) {
+        auto [dist, current] = *queue.begin();
+        queue.erase(queue.begin());
+
+        // Recorrer los vecinos
+        if (adj_list.find(current) != adj_list.end()) {
+            for (auto [neighbour, weight] : adj_list.at(current)) {
+                if (visitable_nodes.find(neighbour) != visitable_nodes.end()) {
+                    double new_dist = dist + weight;
+                    if (new_dist < results[neighbour].second) {
+                        queue.erase({results[neighbour].second, neighbour});
+                        results[neighbour] = {current, new_dist};
+                        queue.insert({new_dist, neighbour});
+                    }
+                }
+            }
+        }
+    }
+
+    return results;
+}
+
+
+
+std::vector<int> Graph::reconstruct_path(int start_id, int goal_id, const std::unordered_map<int, std::pair<int, double>>& dijkstra_result) const {
+    std::vector<int> path;
+    int current = goal_id;
+    
+    // Rastrea el camino de vuelta desde el nodo final al inicial
+    while (current != start_id) {
+        path.push_back(current);
+        auto it = dijkstra_result.find(current);
+        if (it == dijkstra_result.end() || it->second.first == -1) {
+            // Si no encuentra un nodo previo o el nodo previo es -1, el camino no es válido
+            return {}; // Devuelve un vector vacío si no hay camino válido
+        }
+        current = it->second.first; // Actualiza el nodo actual al nodo previo
+    }
+    path.push_back(start_id); // Añade el nodo inicial al final del camino
+    std::reverse(path.begin(), path.end()); // Invierte el vector para obtener el camino en el orden correcto desde el inicio hasta el final
+
+    return path; // Devuelve el camino reconstruido
+}

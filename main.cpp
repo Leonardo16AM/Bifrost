@@ -18,32 +18,63 @@
 #include "src/visualization.h"
 #include "src/inertial_flow.h"
 
+#define fl '\n'
+#define fs first 
+#define sc second
+using namespace std;
+
 
 
 int main() {
-    std::string nodes_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_nodes.csv"; 
-    std::string edges_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_edges.csv"; 
+    string nodes_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_nodes.csv"; 
+    string edges_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_edges.csv"; 
     printf("BUILDING MAP GRAPH\n");
     Graph graph = build_map(nodes_file, edges_file);
     
-    std::vector<std::pair<int, int>> node_partition = inertial_flow_partition(graph);
-    std::cout<<"CALCULATED INHERTIAL FLOW\n";
+    vector<pair<int, int>> node_partition = inertial_flow_partition(graph);
+    cout<<"CALCULATED INERTIAL FLOW\n";
 
+    map<int,int>part;
 
-
-    std::vector<Route> routes = {};
-    std::vector<Person> people;
-    generate_people(people, graph, 10); 
-    
-    for(int i=0;i<people.size();i++){
-        std::vector<int> shortest_path = graph.a_star(people[i].home_node_id,people[i].work_node_id);
-        Route sp(std::to_string(i),  shortest_path,  shortest_path, 3, 2.343);
-        routes.push_back(sp);
-        printf("%d\n",shortest_path.size());
-        if(i%100==0)std::cout<<i<<"\n";
+    map<int,int>p2;
+    int ans=0;
+    for(auto it:node_partition){
+        part[it.first]=it.second;
+        p2[it.second]++;
+        ans=max(ans,p2[it.sc]);
     }
-    
+    cout<<ans<<endl;
 
+    map<int,int>mk;
+    for(auto it:graph.edges){
+        if(part[it.source]!=part[it.target]){
+            mk[it.source]++;
+            mk[it.target]++;
+        }
+    }
+
+    cout<<"asd"<<mk.size()<<endl;
+
+
+    vector<Route> routes = {};
+    vector<Person> people;
+    generate_people(people, graph, 100); 
+    
+    unordered_set<int> visitable_nodes;
+    for(int i=0;i<=graph.nodes.size();i++){
+        visitable_nodes.insert(i);
+    }
+
+    for (int i = 0; i < people.size(); i++) {
+        auto dijkstra_result = graph.dijkstra(people[i].home_node_id, visitable_nodes);
+
+        vector<int> shortest_path = graph.reconstruct_path(people[i].home_node_id, people[i].work_node_id, dijkstra_result);
+
+        Route sp(to_string(i), shortest_path, shortest_path, 3, 2.343);
+        routes.push_back(sp);
+
+        if (i % 100 == 0) cout << i << "\n";
+    }
 
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Bifrost - Interactive Simulation");
 
@@ -57,7 +88,7 @@ int main() {
     float minLat, maxLat, minLon, maxLon;
     find_min_max_lat_lon(graph, minLat, maxLat, minLon, maxLon);
 
-    std::vector<NormalizedNode> normalizedNodes;
+    vector<NormalizedNode> normalizedNodes;
     precompute_normalized_coordinates(graph, normalizedNodes, minLat, maxLat, minLon, maxLon, window.getSize().x - 200, window.getSize().y);
 
     sf::View view = window.getDefaultView();
@@ -158,22 +189,22 @@ int main() {
         window.clear(sf::Color(20, 20, 26));
         
         float fps = 1.f / clock.restart().asSeconds();
-        fpsText.setString("FPS: " + std::to_string(static_cast<int>(fps)));
+        fpsText.setString("FPS: " + to_string(static_cast<int>(fps)));
 
         if (selectedNodeId != -1) {
-            nodeIdText.setString("Node ID: " + std::to_string(selectedNodeId));
+            nodeIdText.setString("Node ID: " + to_string(selectedNodeId));
         }
 
-        logText.setString("Nodes: " + std::to_string(graph.nodes.size()) + "\n" +
-                          "Edges: " + std::to_string(graph.edges.size()) + "\n" +
-                          "People: " + std::to_string(people.size()) + "\n" +
+        logText.setString("Nodes: " + to_string(graph.nodes.size()) + "\n" +
+                          "Edges: " + to_string(graph.edges.size()) + "\n" +
+                          "People: " + to_string(people.size()) + "\n" +
                           "Day: 7\n" +
                           "Hour: 9:41\n" +
                           "Avg Walked: 1.32 km\n" +
                           "Avg Travel Time: 45.5 min");
 
         draw_graph(window, graph, normalizedNodes);
-        draw_partitioned_nodes(window, node_partition, normalizedNodes); // Asumiendo que tienes las coordenadas normalizadas        
+        // draw_partitioned_nodes(window, node_partition, normalizedNodes); // Asumiendo que tienes las coordenadas normalizadas        
         draw_routes(window, routes, normalizedNodes);
         // draw_people(window, people, normalizedNodes,graph.edges);
 
@@ -185,8 +216,8 @@ int main() {
 
         if (selectedRouteId != -1) {
             routeInfoText.setString("Route ID: " + routes[selectedRouteId].id + "\n" +
-                                    "Distance: " + std::to_string(routes[selectedRouteId].total_distance) + " km\n" +
-                                    "Buses: " + std::to_string(routes[selectedRouteId].bus_count));
+                                    "Distance: " + to_string(routes[selectedRouteId].total_distance) + " km\n" +
+                                    "Buses: " + to_string(routes[selectedRouteId].bus_count));
             draw_text_with_outline(window, routeInfoText, sf::Color::Black);
         }
 

@@ -57,7 +57,7 @@ struct pair_hash {
 
 
 void partition_graph_recursively(const Graph& graph, std::vector<std::pair<int, int>>& node_partition, int& current_partition_id, const std::unordered_set<int>& subset) {
-    if (subset.size() < 400) {
+    if (subset.size() < 1000) {
         for (int node_id : subset) {
             node_partition.emplace_back(node_id, current_partition_id);
         }

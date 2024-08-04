@@ -144,9 +144,20 @@ void draw_text_with_outline(sf::RenderWindow& window, sf::Text& text, sf::Color 
 }
 
 void draw_routes(sf::RenderWindow& window, const std::vector<Route>& routes, const std::vector<NormalizedNode>& normalizedNodes) {
+    std::map<std::string, sf::Color> route_colors;
+    std::mt19937 gen(123);
+    std::uniform_int_distribution<> dis(0, 255);
+
+
     for (const auto& route : routes) {
         const auto& stops = route.stops;
-        sf::Color routeColor = route.color;
+        
+        if (route_colors.find(route.id) == route_colors.end()) {
+            route_colors[route.id] = sf::Color(dis(gen), dis(gen), dis(gen));
+        }
+        
+        sf::Color routeColor = route_colors[route.id];
+
         float lineWidth = 0.5f; // Ancho de la línea
 
         for (size_t i = 0; i < stops.size() - 1; ++i) {
@@ -231,14 +242,13 @@ sf::Color generate_light_color() {
 
 void draw_partitioned_nodes(sf::RenderWindow& window, const std::vector<std::pair<int, int>>& node_partition, const std::vector<NormalizedNode>& normalizedNodes) {
     std::map<int, sf::Color> partition_colors;
-    // Usar una semilla fija para el generador
-    std::mt19937 gen(123); // Puedes cambiar "123" a cualquier número para usarlo como semilla
+    std::mt19937 gen(123);
     std::uniform_int_distribution<> dis(0, 255);
 
     // Asignar un color aleatorio a cada partición
     for (const auto& np : node_partition) {
         if (partition_colors.find(np.second) == partition_colors.end()) {
-            partition_colors[np.second] = sf::Color(dis(gen), dis(gen), dis(gen));
+            partition_colors[np.second] = sf::Color( std::min(255,dis(gen)+150), std::min(255,dis(gen)+150),  std::min(255,dis(gen)+150));
         }
     }
 

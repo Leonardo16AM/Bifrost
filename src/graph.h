@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <unordered_map>
 #include <string>
 #include <algorithm>
 #include <queue>
@@ -14,6 +13,9 @@
 #include <filesystem> // C++17 or later
 #include <cmath>
 #include <unordered_set>
+#include <unordered_map>
+#include <set>
+#include <utility>
 
 struct Node {
     int id;
@@ -55,9 +57,12 @@ public:
     void save_betweenness_to_csv(const std::string& filename) const; // Declaración para guardar en CSV
     void load_betweenness_from_csv(const std::string& filename); // Declaración para cargar desde CSV
     std::vector<int> a_star(int start_id, int goal_id) const; // Añadir declaración de A*
+    std::unordered_map<int, std::pair<int, double>> dijkstra(int start_id, const std::unordered_set<int>& visitable_nodes) const;
     std::vector<Node> nodes;
     std::vector<Edge> edges;
     std::unordered_map<int, std::vector<std::pair<int, int>>> adj_list;
+    std::vector<int> reconstruct_path(int start_id, int goal_id, const std::unordered_map<int, std::pair<int, double>>& dijkstra_result) const;
+
 
 private:
     double heuristic(int node_id1, int node_id2) const;
