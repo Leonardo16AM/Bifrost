@@ -2,7 +2,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <unordered_map>
 #include <string>
 #include <algorithm>
 #include <filesystem>
@@ -17,20 +16,25 @@
 #include "src/route.h"
 #include "src/person.h"
 #include "src/visualization.h"
+#include "src/inertial_flow.h"
+
+
 
 int main() {
     std::string nodes_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_nodes.csv"; 
     std::string edges_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_edges.csv"; 
     printf("BUILDING MAP GRAPH\n");
     Graph graph = build_map(nodes_file, edges_file);
-    // printf("CALCULATING BETWEENNESS CENTRALITY\n");
-    // graph.calculate_betweenness_centrality();
+    
+    std::vector<std::pair<int, int>> node_partition = inertial_flow_partition(graph);
+    std::cout<<"CALCULATED INHERTIAL FLOW\n";
 
 
 
     std::vector<Route> routes = {};
     std::vector<Person> people;
-    generate_people(people, graph, 100); // Generar 10,000 personas
+    generate_people(people, graph, 10); 
+    
     for(int i=0;i<people.size();i++){
         std::vector<int> shortest_path = graph.a_star(people[i].home_node_id,people[i].work_node_id);
         Route sp(std::to_string(i),  shortest_path,  shortest_path, 3, 2.343);
@@ -38,8 +42,7 @@ int main() {
         printf("%d\n",shortest_path.size());
         if(i%100==0)std::cout<<i<<"\n";
     }
-    std::cout<<routes.size()<<std::endl;
-
+    
 
 
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Bifrost - Interactive Simulation");
@@ -161,7 +164,6 @@ int main() {
             nodeIdText.setString("Node ID: " + std::to_string(selectedNodeId));
         }
 
-        // Actualizar el texto de los logs
         logText.setString("Nodes: " + std::to_string(graph.nodes.size()) + "\n" +
                           "Edges: " + std::to_string(graph.edges.size()) + "\n" +
                           "People: " + std::to_string(people.size()) + "\n" +
@@ -171,12 +173,10 @@ int main() {
                           "Avg Travel Time: 45.5 min");
 
         draw_graph(window, graph, normalizedNodes);
+        draw_partitioned_nodes(window, node_partition, normalizedNodes); // Asumiendo que tienes las coordenadas normalizadas        
         draw_routes(window, routes, normalizedNodes);
         // draw_people(window, people, normalizedNodes,graph.edges);
 
-        // for (auto& person : people) {
-        //     person.move(1.0f); // Mover a cada persona (ajusta el tiempo según sea necesario)
-        // }
 
         window.setView(window.getDefaultView());
         draw_text_with_outline(window, fpsText, sf::Color::Black);

@@ -69,5 +69,4 @@ bool file_exists_and_readable(const std::string& filename);
 std::vector<Node> read_nodes(const std::string& filename, std::unordered_map<long long, int>& node_map);
 std::vector<Edge> read_edges(const std::string& filename, const std::unordered_map<long long, int>& node_map);
 Graph build_map(const std::string& nodesfile, const std::string& edgesfile);
-
 #endif // GRAPH_H

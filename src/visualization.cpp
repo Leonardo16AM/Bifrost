@@ -76,18 +76,18 @@ void draw_graph(sf::RenderWindow& window, const Graph& graph, const std::vector<
         i += 4;
     }
 
-    for (const auto& node : normalizedNodes) {
-        sf::Vector2f pos = node.position;
-        circle.setPosition(pos - sf::Vector2f(circleRadius, circleRadius));
-        window.draw(circle);
+    // for (const auto& node : normalizedNodes) {
+    //     sf::Vector2f pos = node.position;
+    //     circle.setPosition(pos - sf::Vector2f(circleRadius, circleRadius));
+    //     window.draw(circle);
 
-        nodes[j] = sf::Vertex(pos + sf::Vector2f(-nodeSize / 2, -nodeSize / 2), sf::Color(117, 126, 138));
-        nodes[j+1] = sf::Vertex(pos + sf::Vector2f(nodeSize / 2, -nodeSize / 2), sf::Color(117, 126, 138));
-        nodes[j+2] = sf::Vertex(pos + sf::Vector2f(nodeSize / 2, nodeSize / 2), sf::Color(117, 126, 138));
-        nodes[j+3] = sf::Vertex(pos + sf::Vector2f(-nodeSize / 2, nodeSize / 2), sf::Color(117, 126, 138));
+    //     nodes[j] = sf::Vertex(pos + sf::Vector2f(-nodeSize / 2, -nodeSize / 2), sf::Color(117, 126, 138));
+    //     nodes[j+1] = sf::Vertex(pos + sf::Vector2f(nodeSize / 2, -nodeSize / 2), sf::Color(117, 126, 138));
+    //     nodes[j+2] = sf::Vertex(pos + sf::Vector2f(nodeSize / 2, nodeSize / 2), sf::Color(117, 126, 138));
+    //     nodes[j+3] = sf::Vertex(pos + sf::Vector2f(-nodeSize / 2, nodeSize / 2), sf::Color(117, 126, 138));
 
-        j += 4;
-    }
+    //     j += 4;
+    // }
 
     window.draw(borders);
     window.draw(lines);
@@ -226,4 +226,45 @@ sf::Color generate_light_color() {
     int blue = 128 + std::rand() % 128;
     
     return sf::Color(red, green, blue);
+}
+
+
+void draw_partitioned_nodes(sf::RenderWindow& window, const std::vector<std::pair<int, int>>& node_partition, const std::vector<NormalizedNode>& normalizedNodes) {
+    std::map<int, sf::Color> partition_colors;
+    // Usar una semilla fija para el generador
+    std::mt19937 gen(123); // Puedes cambiar "123" a cualquier número para usarlo como semilla
+    std::uniform_int_distribution<> dis(0, 255);
+
+    // Asignar un color aleatorio a cada partición
+    for (const auto& np : node_partition) {
+        if (partition_colors.find(np.second) == partition_colors.end()) {
+            partition_colors[np.second] = sf::Color(dis(gen), dis(gen), dis(gen));
+        }
+    }
+
+    // Dibujar cada nodo con el color de su partición
+    for (const auto& np : node_partition) {
+        sf::CircleShape circle(0.5f); 
+        circle.setPosition(normalizedNodes[np.first].position);
+        circle.setFillColor(partition_colors[np.second]);
+        window.draw(circle);
+    }
+}
+
+
+
+void draw_mincut(sf::RenderWindow& window, const std::vector<Edge>& mincut_edges, const std::vector<NormalizedNode>& normalizedNodes) {
+    sf::VertexArray lines(sf::Lines);
+
+    for (const auto& edge : mincut_edges) {
+        sf::Vector2f point1 = normalizedNodes[edge.source].position;
+        sf::Vector2f point2 = normalizedNodes[edge.target].position;
+
+        sf::Vertex vertex1(point1, sf::Color::Red);
+        sf::Vertex vertex2(point2, sf::Color::Red);
+        lines.append(vertex1);
+        lines.append(vertex2);
+    }
+
+    window.draw(lines); 
 }
