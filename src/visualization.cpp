@@ -1,9 +1,11 @@
 #include "visualization.h"
 
+#ifdef _WIN32
 void set_window_title_bar_color(sf::RenderWindow& window, COLORREF color) {
     HWND hwnd = window.getSystemHandle();
     DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, &color, sizeof(color));
 }
+#endif
 
 void find_min_max_lat_lon(const Graph& graph, float& minLat, float& maxLat, float& minLon, float& maxLon) {
     minLat = std::numeric_limits<float>::max();

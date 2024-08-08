@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Compiling the project using Makefile"
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "./bifrost",
+            "dependsOn": "build",
+            "group": "test",
+            "problemMatcher": [],
+            "detail": "Running the compiled executable"
+        }
+    ]
+}

@@ -26,8 +26,8 @@ using namespace std;
 
 
 int main() {
-    string nodes_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_nodes.csv"; 
-    string edges_file = "D:/Universidad/Inteligencia Artificial/Bifrost/maps/la_habana_edges.csv"; 
+    string nodes_file = "./maps/la_habana_nodes.csv"; 
+    string edges_file = "./maps/la_habana_edges.csv"; 
     printf("BUILDING MAP GRAPH\n");
     Graph graph = build_map(nodes_file, edges_file);
     
@@ -81,8 +81,10 @@ int main() {
     sf::Image icon;
     if (!icon.loadFromFile("assets/icon.png")) {return -1;}
     window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
-    set_window_title_bar_color(window, RGB(20, 20, 26));
     
+    #ifdef _WIN32
+    set_window_title_bar_color(window, RGB(20, 20, 26));
+    #endif
 
 
     float minLat, maxLat, minLon, maxLon;
@@ -95,7 +97,7 @@ int main() {
     sf::Clock clock;
     
     sf::Font font;
-    if (!font.loadFromFile("D:\\Universidad\\Inteligencia Artificial\\Bifrost\\assets\\SF-Pro.ttf")) {return -1;}
+    if (!font.loadFromFile("./assets/SF-Pro.ttf")) {return -1;}
     
     sf::Text fpsText;
     fpsText.setFont(font);

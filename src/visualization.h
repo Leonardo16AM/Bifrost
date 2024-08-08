@@ -1,8 +1,13 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
+#ifdef _WIN32
 #include <windows.h>
 #include <dwmapi.h>
+#else
+#include <unistd.h>
+#endif
+
+#include <SFML/Graphics.hpp>
 #include <vector>
 #include <string>
 #include <limits>
@@ -19,7 +24,11 @@ struct NormalizedNode {
     NormalizedNode(float x, float y) : position(x, y) {}
 };
 
+
+#ifdef _WIN32
 void set_window_title_bar_color(sf::RenderWindow& window, COLORREF color);
+#endif
+
 void find_min_max_lat_lon(const Graph& graph, float& minLat, float& maxLat, float& minLon, float& maxLon);
 sf::Vector2f normalize_coordinates(float lat, float lon, float minLat, float maxLat, float minLon, float maxLon, float width, float height);
 void precompute_normalized_coordinates(const Graph& graph, std::vector<NormalizedNode>& normalizedNodes, float minLat, float maxLat, float minLon, float maxLon, float width, float height);
