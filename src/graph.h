@@ -62,7 +62,7 @@ public:
     std::vector<Edge> edges;
     std::unordered_map<int, std::vector<std::pair<int, int>>> adj_list;
     std::vector<int> reconstruct_path(int start_id, int goal_id, const std::unordered_map<int, std::pair<int, double>>& dijkstra_result) const;
-
+    Graph to_bidirectional() const;
 
 private:
     double heuristic(int node_id1, int node_id2) const;

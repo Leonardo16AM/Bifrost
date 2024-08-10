@@ -216,7 +216,6 @@ std::vector<Edge> read_edges(const std::string& filename, const std::unordered_m
         edge.access = token;
         std::getline(iss, token, ','); // service
         edge.service = token;
-
         edges.push_back(edge);
     }
 
@@ -375,4 +374,27 @@ std::vector<int> Graph::reconstruct_path(int start_id, int goal_id, const std::u
     std::reverse(path.begin(), path.end()); // Invierte el vector para obtener el camino en el orden correcto desde el inicio hasta el final
 
     return path; // Devuelve el camino reconstruido
+}
+
+
+Graph Graph::to_bidirectional() const {
+    std::vector<Edge> bidirectional_edges;
+    std::unordered_map<int, std::unordered_set<int>> existing_edges;
+
+    for (const auto& edge : edges) {
+        bidirectional_edges.push_back(edge);  
+        existing_edges[edge.source].insert(edge.target);
+
+        if (!edge.oneway && existing_edges[edge.target].find(edge.source) == existing_edges[edge.target].end()) {
+            Edge reverse_edge = edge;  // Copiar la arista
+            std::swap(reverse_edge.source, reverse_edge.target);  // Invertir fuente y destino
+            reverse_edge.reversed = true;  // Indicar que la arista ha sido invertida
+
+            bidirectional_edges.push_back(reverse_edge);  // Añadir la arista invertida
+            existing_edges[edge.target].insert(edge.source);
+        }
+    }
+
+    Graph new_graph(nodes, bidirectional_edges);
+    return new_graph;
 }

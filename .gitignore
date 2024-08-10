@@ -166,3 +166,10 @@ bifrost.exe
 main.o
 main.bin
 bifrost
+*.o
+*.bin
+*.o
+src/dinic.o
+src/graph.o
+src/route.o
+src/person.o

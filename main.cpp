@@ -30,7 +30,8 @@ int main() {
     string edges_file = "./maps/la_habana_edges.csv"; 
     printf("BUILDING MAP GRAPH\n");
     Graph graph = build_map(nodes_file, edges_file);
-    
+    graph=graph.to_bidirectional();
+
     vector<pair<int, int>> node_partition = inertial_flow_partition(graph);
     cout<<"CALCULATED INERTIAL FLOW\n";
 
@@ -43,7 +44,6 @@ int main() {
         p2[it.second]++;
         ans=max(ans,p2[it.sc]);
     }
-    cout<<ans<<endl;
 
     map<int,int>mk;
     for(auto it:graph.edges){
@@ -53,7 +53,6 @@ int main() {
         }
     }
 
-    cout<<"asd"<<mk.size()<<endl;
 
 
     vector<Route> routes = {};
@@ -70,10 +69,8 @@ int main() {
 
         vector<int> shortest_path = graph.reconstruct_path(people[i].home_node_id, people[i].work_node_id, dijkstra_result);
 
-        Route sp(to_string(i), shortest_path, shortest_path, 3, 2.343);
+        Route sp(to_string(i), shortest_path, shortest_path, 3);
         routes.push_back(sp);
-
-        if (i % 100 == 0) cout << i << "\n";
     }
 
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Bifrost - Interactive Simulation");
