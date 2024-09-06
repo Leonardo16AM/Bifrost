@@ -5,7 +5,7 @@ Graph::Graph(const std::vector<Node>& nodes_, const std::vector<Edge>& edges_)
     for (const auto& edge : edges) {
         int source = edge.source;
         int target = edge.target;
-        int edge_id = &edge - &edges[0]; // Get the index of the edge
+        int edge_id = &edge - &edges[0]; 
 
         adj_list[source].emplace_back(target, edge_id);
         if (!edge.oneway) {
@@ -336,7 +336,6 @@ std::unordered_map<int, std::pair<int, double>> Graph::dijkstra(int start_id, co
         auto [dist, current] = *queue.begin();
         queue.erase(queue.begin());
 
-        // Recorrer los vecinos
         if (adj_list.find(current) != adj_list.end()) {
             for (auto [neighbour, weight] : adj_list.at(current)) {
                 if (visitable_nodes.find(neighbour) != visitable_nodes.end()) {
@@ -381,18 +380,10 @@ Graph Graph::to_bidirectional() const {
     std::vector<Edge> bidirectional_edges;
     std::unordered_map<int, std::unordered_set<int>> existing_edges;
 
-    for (const auto& edge : edges) {
-        bidirectional_edges.push_back(edge);  
-        existing_edges[edge.source].insert(edge.target);
-
-        if (!edge.oneway && existing_edges[edge.target].find(edge.source) == existing_edges[edge.target].end()) {
-            Edge reverse_edge = edge;  // Copiar la arista
-            std::swap(reverse_edge.source, reverse_edge.target);  // Invertir fuente y destino
-            reverse_edge.reversed = true;  // Indicar que la arista ha sido invertida
-
-            bidirectional_edges.push_back(reverse_edge);  // Añadir la arista invertida
-            existing_edges[edge.target].insert(edge.source);
-        }
+    for (auto edge : edges) {
+        auto nedge=edge;
+        nedge.oneway=false;
+        bidirectional_edges.push_back(nedge);  
     }
 
     Graph new_graph(nodes, bidirectional_edges);

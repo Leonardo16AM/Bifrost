@@ -32,26 +32,9 @@ int main() {
     Graph graph = build_map(nodes_file, edges_file);
     graph=graph.to_bidirectional();
 
-    vector<pair<int, int>> node_partition = inertial_flow_partition(graph);
+    map<int, int> node_partition = inertial_flow_partition_map(graph);
     cout<<"CALCULATED INERTIAL FLOW\n";
 
-    map<int,int>part;
-
-    map<int,int>p2;
-    int ans=0;
-    for(auto it:node_partition){
-        part[it.first]=it.second;
-        p2[it.second]++;
-        ans=max(ans,p2[it.sc]);
-    }
-
-    map<int,int>mk;
-    for(auto it:graph.edges){
-        if(part[it.source]!=part[it.target]){
-            mk[it.source]++;
-            mk[it.target]++;
-        }
-    }
 
 
 

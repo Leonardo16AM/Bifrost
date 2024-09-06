@@ -133,3 +133,11 @@ std::vector<std::pair<int, int>> inertial_flow_partition(const Graph& graph) {
     return node_partition;
 }
 
+std::map<int,int> inertial_flow_partition_map(const Graph& graph) {
+    vector<pair<int, int>> node_partition = inertial_flow_partition(graph);
+    map<int,int>part;
+    for(auto it:node_partition){
+        part[it.first]=it.second;
+    }
+    return part;
+}
