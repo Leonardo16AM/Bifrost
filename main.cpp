@@ -42,17 +42,9 @@ int main() {
     vector<Person> people;
     generate_people(people, graph, 100); 
     
-    unordered_set<int> visitable_nodes;
-    for(int i=0;i<=graph.nodes.size();i++){
-        visitable_nodes.insert(i);
-    }
 
     for (int i = 0; i < people.size(); i++) {
-        auto dijkstra_result = graph.dijkstra(people[i].home_node_id, visitable_nodes);
-
-        vector<int> shortest_path = graph.reconstruct_path(people[i].home_node_id, people[i].work_node_id, dijkstra_result);
-
-        Route sp(to_string(i), shortest_path, shortest_path, 3);
+        Route sp(graph,to_string(i),{people[i].home_node_id,people[i].work_node_id}, 3);
         routes.push_back(sp);
     }
 

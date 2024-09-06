@@ -4,10 +4,13 @@
 #include <vector>
 #include <string>
 #include <SFML/Graphics.hpp>
+#include "graph.h"
+#include <unordered_set>
+
 
 class Route {
 public:
-    Route(const std::string& id_, const std::vector<int>& stops_, const std::vector<int>& nodes_, int bus_count_, double total_distance_=0.0, const sf::Color& color_ = sf::Color::Yellow);
+    Route(Graph &graph,const std::string& id_, const std::vector<int>& stops_, int bus_count_, double total_distance_=0.0, const sf::Color& color_ = sf::Color::Yellow);
 
     std::string id;
     std::vector<int> stops; 

@@ -152,7 +152,7 @@ void draw_routes(sf::RenderWindow& window, const std::vector<Route>& routes, con
 
 
     for (const auto& route : routes) {
-        const auto& stops = route.stops;
+        const auto& nodes = route.nodes;
         
         if (route_colors.find(route.id) == route_colors.end()) {
             route_colors[route.id] = sf::Color(dis(gen), dis(gen), dis(gen));
@@ -162,9 +162,9 @@ void draw_routes(sf::RenderWindow& window, const std::vector<Route>& routes, con
 
         float lineWidth = 0.5f; // Ancho de la línea
 
-        for (size_t i = 0; i < stops.size() - 1; ++i) {
-            sf::Vector2f startPos = normalizedNodes[stops[i]].position;
-            sf::Vector2f endPos = normalizedNodes[stops[i + 1]].position;
+        for (size_t i = 0; i < nodes.size() - 1; ++i) {
+            sf::Vector2f startPos = normalizedNodes[nodes[i]].position;
+            sf::Vector2f endPos = normalizedNodes[nodes[i + 1]].position;
 
             sf::Vector2f direction = endPos - startPos;
             float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
