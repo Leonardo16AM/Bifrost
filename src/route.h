@@ -7,11 +7,11 @@
 
 class Route {
 public:
-    Route(const std::string& id_, const std::vector<int>& stops_, const std::vector<int>& streets_, int bus_count_, double total_distance_=0.0, const sf::Color& color_ = sf::Color::Yellow);
+    Route(const std::string& id_, const std::vector<int>& stops_, const std::vector<int>& nodes_, int bus_count_, double total_distance_=0.0, const sf::Color& color_ = sf::Color::Yellow);
 
     std::string id;
     std::vector<int> stops; 
-    std::vector<int> streets; 
+    std::vector<int> nodes; 
     int bus_count;
     double total_distance; 
     sf::Color color;

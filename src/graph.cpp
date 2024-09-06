@@ -161,6 +161,29 @@ std::vector<Node> read_nodes(const std::string& filename, std::unordered_map<lon
     return nodes;
 }
 
+std::vector<std::string> split_csv_line(const std::string& line) {
+    std::vector<std::string> tokens;
+    std::stringstream token;
+    bool in_quotes = false;
+
+    for (char ch : line) {
+        if (ch == '"' && (token.str().empty() || token.str().back() != '\\')) {
+            in_quotes = !in_quotes;  // Cambia el estado dentro/fuera de comillas
+        } else if (ch == ',' && !in_quotes) {
+            // Si no estamos dentro de comillas, es una separación de columna
+            tokens.push_back(token.str());
+            token.str("");  // Resetea el token
+        } else {
+            // Agrega el carácter al token actual
+            token << ch;
+        }
+    }
+
+    // Añade el último token
+    tokens.push_back(token.str());
+    return tokens;
+}
+
 std::vector<Edge> read_edges(const std::string& filename, const std::unordered_map<long long, int>& node_map) {
     std::vector<Edge> edges;
     std::ifstream file(filename);
@@ -171,51 +194,36 @@ std::vector<Edge> read_edges(const std::string& filename, const std::unordered_m
     }
 
     std::string line;
-    std::getline(file, line);
+    std::getline(file, line);  // Leer el encabezado y descartarlo
 
     while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        std::string token;
-        Edge edge;
+        std::vector<std::string> tokens = split_csv_line(line);
+        if (tokens.size() < 19) {
+            std::cerr << "Error: Formato de línea incorrecto." << std::endl;
+            continue;
+        }
 
-        std::getline(iss, token, ','); // source (u)
-        edge.source = node_map.at(std::stoll(token));
-        std::getline(iss, token, ','); // target (v)
-        edge.target = node_map.at(std::stoll(token));
-        std::getline(iss, token, ','); // key
-        edge.key = token;
-        std::getline(iss, token, ','); // osmid
-        edge.osmid = token;
-        std::getline(iss, token, ','); // oneway
-        edge.oneway = (token == "True");
-        std::getline(iss, token, ','); // lanes
-        edge.lanes = token;
-        std::getline(iss, token, ','); // name
-        edge.name = token;
-        std::getline(iss, token, ','); // highway
-        edge.highway = token;
-        std::getline(iss, token, ','); // maxspeed
-        edge.maxspeed = token;
-        std::getline(iss, token, ','); // reversed
-        edge.reversed = (token == "True");
-        std::getline(iss, token, ','); // length
-        edge.length = token;
-        std::getline(iss, token, ','); // geometry
-        edge.geometry = token;
-        std::getline(iss, token, ','); // bridge
-        edge.bridge = token;
-        std::getline(iss, token, ','); // ref
-        edge.ref = token;
-        std::getline(iss, token, ','); // junction
-        edge.junction = token;
-        std::getline(iss, token, ','); // tunnel
-        edge.tunnel = token;
-        std::getline(iss, token, ','); // width
-        edge.width = token;
-        std::getline(iss, token, ','); // access
-        edge.access = token;
-        std::getline(iss, token, ','); // service
-        edge.service = token;
+        Edge edge;
+        edge.source = node_map.at(std::stoll(tokens[0]));
+        edge.target = node_map.at(std::stoll(tokens[1]));
+        edge.key = tokens[2];
+        edge.osmid = tokens[3];
+        edge.oneway = (tokens[4] == "True");
+        edge.lanes = tokens[5];
+        edge.name = tokens[6];
+        edge.highway = tokens[7];
+        edge.maxspeed = tokens[8];
+        edge.reversed = (tokens[9] == "True");
+        edge.length = tokens[10];
+        edge.geometry = tokens[11];  // Se maneja correctamente el campo de geometría
+        edge.bridge = tokens[12];
+        edge.ref = tokens[13];
+        edge.junction = tokens[14];
+        edge.tunnel = tokens[15];
+        edge.width = tokens[16];
+        edge.access = tokens[17];
+        edge.service = tokens[18];
+
         edges.push_back(edge);
     }
 
@@ -325,7 +333,6 @@ std::unordered_map<int, std::pair<int, double>> Graph::dijkstra(int start_id, co
     std::unordered_map<int, std::pair<int, double>> results; // nodo -> (nodo previo, distancia mínima)
     std::set<std::pair<double, int>> queue; // (distancia, nodo)
 
-    // Inicializar las distancias a infinito y el nodo previo a -1
     for (int node_id : visitable_nodes) {
         results[node_id] = {-1, std::numeric_limits<double>::infinity()};
     }
@@ -337,7 +344,9 @@ std::unordered_map<int, std::pair<int, double>> Graph::dijkstra(int start_id, co
         queue.erase(queue.begin());
 
         if (adj_list.find(current) != adj_list.end()) {
-            for (auto [neighbour, weight] : adj_list.at(current)) {
+            for (auto [neighbour, edge_id] : adj_list.at(current)) {
+                double weight= stod(edges[edge_id].length);
+                
                 if (visitable_nodes.find(neighbour) != visitable_nodes.end()) {
                     double new_dist = dist + weight;
                     if (new_dist < results[neighbour].second) {
