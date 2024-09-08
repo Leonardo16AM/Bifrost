@@ -218,7 +218,7 @@ std::vector<Edge> read_edges(const std::string& filename, const std::unordered_m
         edge.highway = tokens[7];
         edge.maxspeed = tokens[8];
         edge.reversed = (tokens[9] == "True");
-        edge.length = tokens[10];
+        edge.length = std::stod(tokens[10]);
         edge.geometry = tokens[11];  // Se maneja correctamente el campo de geometría
         edge.bridge = tokens[12];
         edge.ref = tokens[13];
@@ -349,7 +349,7 @@ std::unordered_map<int, std::pair<int, double>> Graph::dijkstra(int start_id, co
 
         if (adj_list.find(current) != adj_list.end()) {
             for (auto [neighbour, edge_id] : adj_list.at(current)) {
-                double weight= stod(edges[edge_id].length);
+                double weight=edges[edge_id].length;
                 
                 if (visitable_nodes.find(neighbour) != visitable_nodes.end()) {
                     double new_dist = dist + weight;

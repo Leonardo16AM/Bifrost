@@ -39,5 +39,5 @@ void draw_text_with_outline(sf::RenderWindow& window, sf::Text& text, sf::Color 
 void draw_routes(sf::RenderWindow& window, const std::vector<Route>& routes, const std::vector<NormalizedNode>& normalizedNodes);
 void display_route_properties(sf::RenderWindow& window, const Route& route, const sf::Font& font, float windowWidth);
 sf::Color generate_light_color();
-void draw_partitioned_nodes(sf::RenderWindow& window, const std::vector<std::pair<int, int>>& node_partition, const std::vector<NormalizedNode>& normalizedNodes);
+void draw_partitioned_nodes(sf::RenderWindow& window, const std::map<int, int>& node_partition, const std::vector<NormalizedNode>& normalizedNodes);
 void draw_mincut(sf::RenderWindow& window, const std::vector<Edge>& mincut_edges, const std::vector<NormalizedNode>& normalizedNodes);

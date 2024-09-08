@@ -177,12 +177,15 @@ void draw_routes(sf::RenderWindow& window, const std::vector<Route>& routes, con
 
             window.draw(line);
         }
-        
+    }
+    
+
+    for (const auto& route : routes) {    
         for (const auto& stop : route.stops) {
             sf::Vector2f stopPos = normalizedNodes[stop].position;
 
             sf::CircleShape circle(0.5f);  
-            circle.setPosition(stopPos - sf::Vector2f(0.3f, 0.3f));  // Centrar el círculo
+            circle.setPosition(stopPos - sf::Vector2f(0.25f, 0.25f));  // Centrar el círculo
             circle.setFillColor(sf::Color::White);
 
             window.draw(circle);
@@ -217,7 +220,7 @@ sf::Color generate_light_color() {
 }
 
 
-void draw_partitioned_nodes(sf::RenderWindow& window, const std::vector<std::pair<int, int>>& node_partition, const std::vector<NormalizedNode>& normalizedNodes) {
+void draw_partitioned_nodes(sf::RenderWindow& window, const std::map<int, int>& node_partition, const std::vector<NormalizedNode>& normalizedNodes) {
     std::map<int, sf::Color> partition_colors;
     std::mt19937 gen(123);
     std::uniform_int_distribution<> dis(0, 255);

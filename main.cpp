@@ -27,22 +27,21 @@ using namespace std;
 
 
 int main() {
-
     string nodes_file = "./maps/la_habana_nodes.csv"; 
-    string edges_file = "./maps/la_habana_edges.csv"; 
+    string edges_file = "./maps/la_habana_edges.csv";
+    
     printf("BUILDING MAP GRAPH\n");
     Graph graph = build_map(nodes_file, edges_file);
-    graph=graph.to_bidirectional();
-
+    // graph=graph.to_bidirectional();
+    cout<<"CALCULATING INERTIAL FLOW\n";
     map<int, int> node_partition = inertial_flow_partition_map(graph);
-    cout<<"CALCULATED INERTIAL FLOW\n";
 
-
+    cout<<"CREATING TEST ROUTES"<<endl;
 
     // Generamos 100 rutas random (fijate que las persons que usamos ahi no sirven para nada, es solo para generar los inicios y fiin de las rutas)
     vector<Route> routes = {};
     vector<Person> route_inits;
-    generate_people(route_inits, graph, 100); 
+    generate_people(route_inits, graph, 10);
         
     for (int i = 0; i < route_inits.size(); i++) {
         //Creamos una ruta desde HOME hasta WORK
@@ -61,9 +60,17 @@ int main() {
 
     /*-------------------------- SIMULATION STUF --------------------------------------------------*/
     {
-        simulation S(routes,graph,1000);
-        
-        cout<< S.simulate(7) <<endl;
+        cout<<"STARTING TEST SIMULATIONS"<<endl;
+        auto start = std::chrono::high_resolution_clock::now();
+
+        for(int i=0;i<1;i++){
+            simulation S(routes,graph,50);    
+            cout<<"RESULTS: "<< S.simulate(7) <<endl; 
+        }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << "Time taken: " << elapsed.count() << " seconds" << std::endl;
        
     }
     

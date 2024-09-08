@@ -39,7 +39,7 @@ struct Edge {
     std::string highway;
     std::string maxspeed; //double
     bool reversed;
-    std::string length; //double
+    double length; //double
     std::string geometry;
     std::string bridge;
     std::string ref;
