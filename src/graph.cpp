@@ -14,6 +14,10 @@ Graph::Graph(const std::vector<Node>& nodes_, const std::vector<Edge>& edges_)
     }
 }
 
+Graph::Graph(){
+    
+}
+
 const std::vector<std::pair<int, int>>& Graph::operator[](int node_id) const {
     auto it = adj_list.find(node_id);
     if (it == adj_list.end()) {

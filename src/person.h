@@ -3,6 +3,11 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
+#include <cmath>
+#include <random>
+#include <algorithm>
+#include "graph.h"
 
 struct Position {
     int node_id; // -1 if on an edge
@@ -12,18 +17,21 @@ struct Position {
 
 class Person {
 public:
-    Person(const std::string& name_, int home_node_id_, int work_node_id_);
+    Person(int home_node_id_, int work_node_id_);
 
-    void move(float seconds);
-
-    std::string name;
+    int choose_place_based_on_distance(const std::vector<double>& distances);
+    
     int home_node_id;
     int work_node_id;
-    Position current_position;
-    int destination;
-    std::vector<int> path;
+
+    // Position current_position;
+    // int destination;
+    // std::vector<int> path;
+
+    double exp_lambda=0.5;
+    double norm_prob=0.7;
 };
 
-void move_people(std::vector<Person>& people, float seconds);
+void generate_people(std::vector<Person>& people, const Graph& graph, int numPeople);
 
 #endif // PERSON_H

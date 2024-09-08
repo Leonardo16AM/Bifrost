@@ -2,46 +2,42 @@
 #include <cmath>
 #include <iostream>
 
-Person::Person(const std::string& name_, int home_node_id_, int work_node_id_)
-    : name(name_), home_node_id(home_node_id_), work_node_id(work_node_id_), destination(-1) {
-    current_position = {home_node_id_, -1, 0.0f};
+Person::Person(int home_node_id_, int work_node_id_)
+    : home_node_id(home_node_id_), work_node_id(work_node_id_){
+        
 }
 
+int Person::choose_place_based_on_distance(const std::vector<double>& distances) {
+    std::vector<double> probabilities;
+    double total_prob = 0.0;
 
-void Person::move(float seconds) {
-    // Implementation of moving logic
-    if (destination == -1 || path.empty()) {
-        return;
+    // Calcular la probabilidad para cada lugar usando una distribución exponencial
+    for (double d : distances) {
+        double prob = this->exp_lambda * exp(-this->exp_lambda * d);
+        probabilities.push_back(prob);
+        total_prob += prob;
     }
-    // Move logic for nodes and edges
-    if (current_position.node_id != -1) {
-        // Currently at a node
-        if (!path.empty()) {
-            current_position.node_id = path.front();
-            path.erase(path.begin());
-            if (path.empty()) {
-                destination = -1; // Reached destination
-            }
-        }
-    } else {
-        // Currently on an edge
-        current_position.edge_position += seconds; // Simulating movement along the edge
-        if (current_position.edge_position >= 1.0f) {
-            current_position.node_id = path.front();
-            current_position.edge_id = -1;
-            current_position.edge_position = 0.0f;
-            path.erase(path.begin());
-            if (path.empty()) {
-                destination = -1; // Reached destination
-            }
-        }
+
+    // Normalizar las probabilidades
+    for (double& prob : probabilities) {
+        prob /= total_prob;
     }
+
+    // Seleccionar un lugar basado en la probabilidad acumulada
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::discrete_distribution<> dist(probabilities.begin(), probabilities.end());
+
+    return dist(gen);  // Retorna el índice del lugar elegido
 }
 
-void move_people_kernel(Person* people, int num_people, float seconds) {
-    
-}
 
-void move_people(std::vector<Person>& people, float seconds) {
+void generate_people(std::vector<Person>& people, const Graph& graph, int numPeople) {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
+    for (int i = 0; i < numPeople; ++i) {
+        int home_node_id = std::rand() % graph.nodes.size();
+        int work_node_id = std::rand() % graph.nodes.size();
+        people.emplace_back(home_node_id, work_node_id);
+    }
 }

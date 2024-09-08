@@ -53,6 +53,7 @@ struct Edge {
 class Graph {
 public:
     Graph(const std::vector<Node>& nodes_, const std::vector<Edge>& edges_);
+    Graph();
     const std::vector<std::pair<int, int>>& operator[](int node_id) const;
     void calculate_betweenness_centrality(); // Añadir declaración de función
     void save_betweenness_to_csv(const std::string& filename) const; // Declaración para guardar en CSV

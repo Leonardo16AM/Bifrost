@@ -97,34 +97,34 @@ void draw_graph(sf::RenderWindow& window, const Graph& graph, const std::vector<
 }
 
 
-void draw_people(sf::RenderWindow& window, const std::vector<Person>& people, const std::vector<NormalizedNode>& normalizedNodes, const std::vector<Edge>& edges) {
-    sf::VertexArray personQuads(sf::Quads);
-    float personSize = 0.2f; 
+// void draw_people(sf::RenderWindow& window, const std::vector<Person>& people, const std::vector<NormalizedNode>& normalizedNodes, const std::vector<Edge>& edges) {
+//     sf::VertexArray personQuads(sf::Quads);
+//     float personSize = 0.2f; 
 
-    for (const auto& person : people) {
-        sf::Vector2f pos;
+//     for (const auto& person : people) {
+//         sf::Vector2f pos;
 
-        if (person.current_position.node_id != -1) {
-            // Persona está en un nodo
-            pos = normalizedNodes[person.current_position.node_id].position;
-        } else {
-            // Persona está en una arista
-            const Edge& edge = edges[person.current_position.edge_id];
-            sf::Vector2f posStart = normalizedNodes[edge.source].position;
-            sf::Vector2f posEnd = normalizedNodes[edge.target].position;
+//         if (person.current_position.node_id != -1) {
+//             // Persona está en un nodo
+//             pos = normalizedNodes[person.current_position.node_id].position;
+//         } else {
+//             // Persona está en una arista
+//             const Edge& edge = edges[person.current_position.edge_id];
+//             sf::Vector2f posStart = normalizedNodes[edge.source].position;
+//             sf::Vector2f posEnd = normalizedNodes[edge.target].position;
             
-            float edgePos = person.current_position.edge_position;
-            pos = posStart + edgePos * (posEnd - posStart);
-        }
+//             float edgePos = person.current_position.edge_position;
+//             pos = posStart + edgePos * (posEnd - posStart);
+//         }
 
-        personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, -personSize / 2), sf::Color::Blue));
-        personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, -personSize / 2), sf::Color::Blue));
-        personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, personSize / 2), sf::Color::Blue));
-        personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, personSize / 2), sf::Color::Blue));
-    }
+//         personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, -personSize / 2), sf::Color::Blue));
+//         personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, -personSize / 2), sf::Color::Blue));
+//         personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, personSize / 2), sf::Color::Blue));
+//         personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, personSize / 2), sf::Color::Blue));
+//     }
 
-    window.draw(personQuads);
-}
+//     window.draw(personQuads);
+// }
 
 
 float euclidean_distance(const sf::Vector2f& a, const sf::Vector2f& b) {
@@ -177,6 +177,16 @@ void draw_routes(sf::RenderWindow& window, const std::vector<Route>& routes, con
 
             window.draw(line);
         }
+        
+        for (const auto& stop : route.stops) {
+            sf::Vector2f stopPos = normalizedNodes[stop].position;
+
+            sf::CircleShape circle(0.5f);  
+            circle.setPosition(stopPos - sf::Vector2f(0.3f, 0.3f));  // Centrar el círculo
+            circle.setFillColor(sf::Color::White);
+
+            window.draw(circle);
+        }
     }
 }
 
@@ -194,42 +204,7 @@ void display_route_properties(sf::RenderWindow& window, const Route& route, cons
     draw_text_with_outline(window, routeText, sf::Color::Black);
 }
 
-void generate_people(std::vector<Person>& people, const Graph& graph, int numPeople) {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
-    for (int i = 0; i < numPeople; ++i) {
-        int home_node_id = std::rand() % graph.nodes.size();
-        int work_node_id = std::rand() % graph.nodes.size();
-        std::string name = "Person_" + std::to_string(i);
-
-        people.emplace_back(name, home_node_id, work_node_id);
-    }
-}
-
-// void generate_people(std::vector<Person>& people, const Graph& graph, int numPeople) {
-//     std::srand(static_cast<unsigned int>(std::time(nullptr)));
-
-//     for (int i = 0; i < numPeople; ++i) {
-//         std::string name = "Person_" + std::to_string(i);
-
-//         bool onNode = (std::rand() % 2 == 0);
-        
-//         if (onNode) {
-//             // Generar posición en un nodo
-//             int node_id = std::rand() % graph.nodes.size();
-//             people.emplace_back(name, node_id, node_id);  // Asumimos que el trabajo está en el mismo nodo para simplificar
-//             people.back().current_position = { node_id, -1, 0.0f };
-//         } else {
-//             // Generar posición en una arista
-//             int edge_id = std::rand() % graph.edges.size();
-//             float edge_position = static_cast<float>(std::rand()) / RAND_MAX;  // Generar una posición aleatoria en la arista
-//             int source_node = graph.edges[edge_id].source;
-
-//             people.emplace_back(name, source_node, source_node);  // Asumimos que el trabajo está en el mismo nodo para simplificar
-//             people.back().current_position = { -1, edge_id, edge_position };
-//         }
-//     }
-// }
 
 sf::Color generate_light_color() {
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
@@ -247,14 +222,12 @@ void draw_partitioned_nodes(sf::RenderWindow& window, const std::vector<std::pai
     std::mt19937 gen(123);
     std::uniform_int_distribution<> dis(0, 255);
 
-    // Asignar un color aleatorio a cada partición
     for (const auto& np : node_partition) {
         if (partition_colors.find(np.second) == partition_colors.end()) {
             partition_colors[np.second] = sf::Color( std::min(255,dis(gen)+150), std::min(255,dis(gen)+150),  std::min(255,dis(gen)+150));
         }
     }
 
-    // Dibujar cada nodo con el color de su partición
     for (const auto& np : node_partition) {
         sf::CircleShape circle(0.5f); 
         circle.setPosition(normalizedNodes[np.first].position);
