@@ -173,3 +173,5 @@ src/dinic.o
 src/graph.o
 src/route.o
 src/person.o
+.vscode
+MakeFile
