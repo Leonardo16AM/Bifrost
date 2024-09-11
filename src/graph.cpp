@@ -371,7 +371,6 @@ std::unordered_map<int, std::pair<int, double>> Graph::dijkstra(int start_id, co
 std::vector<int> Graph::reconstruct_path(int start_id, int goal_id, const std::unordered_map<int, std::pair<int, double>>& dijkstra_result) const {
     std::vector<int> path;
     int current = goal_id;
-    
     // Rastrea el camino de vuelta desde el nodo final al inicial
     while (current != start_id) {
         path.push_back(current);
@@ -384,7 +383,6 @@ std::vector<int> Graph::reconstruct_path(int start_id, int goal_id, const std::u
     }
     path.push_back(start_id); // Añade el nodo inicial al final del camino
     std::reverse(path.begin(), path.end()); // Invierte el vector para obtener el camino en el orden correcto desde el inicio hasta el final
-
     return path; // Devuelve el camino reconstruido
 }
 

@@ -9,7 +9,6 @@ Route::Route(Graph &graph,const std::string& id_, const std::vector<int>& stops_
         }
         for(int i=1;i<stops_.size();i++){            
             auto dijkstra_result = graph.dijkstra(stops_[i-1], visitable_nodes);
-
             std::vector<int> shortest_path = graph.reconstruct_path(stops_[i-1], stops_[i], dijkstra_result);
             
             for(auto it: shortest_path){

@@ -26,7 +26,7 @@ using namespace std;
 
 
 int BUSES=100;
-int ROUTES=50;
+int ROUTES=100;
 int PERSONS=100;
 
 int main() {
@@ -45,13 +45,13 @@ int main() {
     vector<Route> routes = {};
     vector<Person> route_inits;
     generate_people(route_inits, graph, ROUTES);
-        
+    
     for (int i = 0; i < route_inits.size(); i++) {
         //Creamos una ruta desde HOME hasta WORK
         Route sp(graph,to_string(i),{route_inits[i].home_node_id,route_inits[i].work_node_id}, 3);
-
         //Hacemos que cada 5 calles tengamos una parada
         sp.stops.pop_back();
+        if(sp.nodes.size()==0)continue;
         for(int i=0;i<sp.nodes.size()-1;i++){
             if(i%5==0){
                 sp.stops.push_back(sp.nodes[i]);
