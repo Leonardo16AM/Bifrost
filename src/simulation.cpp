@@ -13,17 +13,39 @@ simulation::simulation(std::vector<Route>buses_,Graph G_,int habitants=100):G(G_
     for(auto &e: BE){
         e.length=e.length/84.0; // minutos caminando
     }
+
+    int idn=BN.size();
+
     for(auto b:buses){
-        int j=0;
-        for(int i=1;i<b.stops.size();i++){
-            Edge ne;
+        for(int i=0;i<b.stops.size();i++){
             
-            ne.source=b.stops[i-1];
+            Node node_wr=BN[b.stops[i]];
+            BN.push_back(node_wr);
+
+            Edge ne;
+            ne.source=b.stops[i];
+            ne.target=idn;
+            ne.oneway=true;
+            ne.length=10;
+            BE.push_back(ne);
+            
+            ne.source=idn;
             ne.target=b.stops[i];
+            ne.oneway=true;
+            ne.length=0;
+            BE.push_back(ne);
+
+            if(i==0)continue;
+
+            
+            ne.source=idn-1;
+            ne.target=idn;
             ne.oneway=false;
             ne.length=2.5;
 
             BE.push_back(ne);
+            
+            idn++;
         }
     }
 

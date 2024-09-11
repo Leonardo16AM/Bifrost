@@ -171,3 +171,4 @@ bifrost
 src/*.o
 .vscode
 MakeFile
+*.dll
