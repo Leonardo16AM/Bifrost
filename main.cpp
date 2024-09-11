@@ -25,6 +25,9 @@
 using namespace std;
 
 
+int BUSES=100;
+int ROUTES=50;
+int PERSONS=100;
 
 int main() {
     string nodes_file = "./maps/la_habana_nodes.csv"; 
@@ -41,7 +44,7 @@ int main() {
     // Generamos 100 rutas random (fijate que las persons que usamos ahi no sirven para nada, es solo para generar los inicios y fiin de las rutas)
     vector<Route> routes = {};
     vector<Person> route_inits;
-    generate_people(route_inits, graph, 50);
+    generate_people(route_inits, graph, ROUTES);
         
     for (int i = 0; i < route_inits.size(); i++) {
         //Creamos una ruta desde HOME hasta WORK
@@ -59,15 +62,15 @@ int main() {
     }
 
     /*-------------------------- SIMULATION STUF --------------------------------------------------*/
+    double BEST_RESULTS;
     {
         cout<<"STARTING TEST SIMULATIONS"<<endl;
         auto start = std::chrono::high_resolution_clock::now();
 
-        for(int i=0;i<1;i++){
-            simulation S(routes,graph,100);    
-            cout<<"RESULTS: "<< S.simulate(7) <<endl; 
-        }
-
+        simulation S(routes,graph,PERSONS);    
+        BEST_RESULTS=S.simulate(7);
+        cout<<"RESULTS: "<< BEST_RESULTS <<endl; 
+    
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         std::cout << "Time taken: " << elapsed.count() << " seconds" << std::endl;
@@ -199,11 +202,10 @@ int main() {
 
             logText.setString("Nodes: " + to_string(graph.nodes.size()) + "\n" +
                             "Edges: " + to_string(graph.edges.size()) + "\n" +
-                            "People: " + to_string(10000) + "\n" +
-                            "Day: 7\n" +
-                            "Hour: 9:41\n" +
-                            "Avg Walked: 1.32 km\n" +
-                            "Avg Travel Time: 45.5 min");
+                            "People: " + to_string(PERSONS) + "\n" +
+                            "Routes: " + to_string(ROUTES) + "\n" +
+                            "Buses: " + to_string(BUSES) + "\n" +
+                            "Avg Travel Time: "+ to_string((int)BEST_RESULTS)+"min");
 
             draw_graph(window, graph, normalizedNodes);
             // draw_partitioned_nodes(window, node_partition, normalizedNodes); // Asumiendo que tienes las coordenadas normalizadas        
