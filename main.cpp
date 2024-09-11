@@ -41,7 +41,7 @@ int main() {
     // Generamos 100 rutas random (fijate que las persons que usamos ahi no sirven para nada, es solo para generar los inicios y fiin de las rutas)
     vector<Route> routes = {};
     vector<Person> route_inits;
-    generate_people(route_inits, graph, 10);
+    generate_people(route_inits, graph, 50);
         
     for (int i = 0; i < route_inits.size(); i++) {
         //Creamos una ruta desde HOME hasta WORK
@@ -64,7 +64,7 @@ int main() {
         auto start = std::chrono::high_resolution_clock::now();
 
         for(int i=0;i<1;i++){
-            simulation S(routes,graph,50);    
+            simulation S(routes,graph,100);    
             cout<<"RESULTS: "<< S.simulate(7) <<endl; 
         }
 

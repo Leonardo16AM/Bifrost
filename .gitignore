@@ -163,15 +163,11 @@ cython_debug/
 
 cache
 bifrost.exe
-main.o
+# main.o
 main.bin
 bifrost
-*.o
+# *.o
 *.bin
-*.o
-src/dinic.o
-src/graph.o
-src/route.o
-src/person.o
+# src/*.o
 .vscode
 MakeFile

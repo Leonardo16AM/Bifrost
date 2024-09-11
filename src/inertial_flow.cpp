@@ -22,7 +22,7 @@ std::vector<Edge> latitudinal_mincut(Graph& graph,int n) {
     auto mincut_edges_dinic = flow.get_mincut(source, sink); // Obtener el mincut
     std::vector<Edge> result;
     for (const auto& e : mincut_edges_dinic) {
-        Edge converted_edge = {e.src, e.dst, "", "", false, "", "", "", "", false, "", "", "", "", "", "", ""};
+        Edge converted_edge = {e.src, e.dst, "", "", false, "", "", "", "", false, 100.0, "", "", "", "", "", ""};
         result.push_back(converted_edge);
     }
     return result;
