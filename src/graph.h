@@ -20,11 +20,11 @@
 
 struct Node {
     int id;
-    std::string lat;
-    std::string lon;
-    int street_count;
-    std::string highway;
-    std::string geometry;
+    float lat=0.0;
+    float lon=0.0;
+    int street_count=0;
+    std::string highway="";
+    std::string geometry="";
     double betweenness_centrality = 0.0; // Añadir campo para la centralidad de intermediación
 };
 

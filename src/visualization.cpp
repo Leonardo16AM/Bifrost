@@ -14,8 +14,8 @@ void find_min_max_lat_lon(const Graph& graph, float& minLat, float& maxLat, floa
     maxLon = std::numeric_limits<float>::lowest();
 
     for (const auto& node : graph.nodes) {
-        float lat = std::stof(node.lat);
-        float lon = std::stof(node.lon);
+        auto lat = node.lat;
+        auto lon = node.lon;
 
         if (lat < minLat) minLat = lat;
         if (lat > maxLat) maxLat = lat;
@@ -32,7 +32,7 @@ sf::Vector2f normalize_coordinates(float lat, float lon, float minLat, float max
 
 void precompute_normalized_coordinates(const Graph& graph, std::vector<NormalizedNode>& normalizedNodes, float minLat, float maxLat, float minLon, float maxLon, float width, float height) {
     for (const auto& node : graph.nodes) {
-        sf::Vector2f pos = normalize_coordinates(std::stof(node.lat), std::stof(node.lon), minLat, maxLat, minLon, maxLon, width, height);
+        sf::Vector2f pos = normalize_coordinates(node.lat, node.lon, minLat, maxLat, minLon, maxLon, width, height);
         normalizedNodes.emplace_back(pos.x, pos.y);
     }
 }

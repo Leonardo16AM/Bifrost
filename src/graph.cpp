@@ -123,6 +123,26 @@ void Graph::load_betweenness_from_csv(const std::string& filename) {
     }
 }
 
+std::vector<std::string> split_csv_line(const std::string& line) {
+    std::vector<std::string> tokens;
+    std::stringstream token;
+    bool in_quotes = false;
+
+    for (char ch : line) {
+        if (ch == '"' && (token.str().empty() || token.str().back() != '\\')) {
+            in_quotes = !in_quotes; 
+        } else if (ch == ',' && !in_quotes) {
+            tokens.push_back(token.str());
+            token.str(""); 
+        } else {
+            token << ch;
+        }
+    }
+
+    tokens.push_back(token.str());
+    return tokens;
+}
+
 
 std::vector<Node> read_nodes(const std::string& filename, std::unordered_map<long long, int>& node_map) {
     std::vector<Node> nodes;
@@ -138,25 +158,23 @@ std::vector<Node> read_nodes(const std::string& filename, std::unordered_map<lon
 
     int node_id = 0;
     while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        std::string token;
+        std::vector<std::string> tokens = split_csv_line(line);
+        if (tokens.size() < 6) {
+            std::cerr << "Error: Formato de línea incorrecto." << std::endl;
+            continue;
+        }
+
         Node node;
 
-        std::getline(iss, token, ','); // osmid
-        long long osmid = std::stoll(token);
+        long long osmid = std::stoll(tokens[0]);
         node_map[osmid] = node_id++;
         node.id = node_map[osmid];
 
-        std::getline(iss, token, ','); // y (latitud)
-        node.lat = token;
-        std::getline(iss, token, ','); // x (longitud)
-        node.lon = token;
-        std::getline(iss, token, ','); // street_count
-        node.street_count = token.empty() ? 0 : std::stoi(token);
-        std::getline(iss, token, ','); // highway
-        node.highway = token;
-        std::getline(iss, token, ','); // geometry
-        node.geometry = token;
+        node.lat = std::stof(tokens[1]);
+        node.lon = std::stof(tokens[2]);
+        node.street_count = tokens[3].empty() ? 0 : std::stoi(tokens[3]);
+        node.highway = tokens[4];
+        node.geometry = tokens[5];
 
         nodes.push_back(node);
     }
@@ -165,28 +183,7 @@ std::vector<Node> read_nodes(const std::string& filename, std::unordered_map<lon
     return nodes;
 }
 
-std::vector<std::string> split_csv_line(const std::string& line) {
-    std::vector<std::string> tokens;
-    std::stringstream token;
-    bool in_quotes = false;
 
-    for (char ch : line) {
-        if (ch == '"' && (token.str().empty() || token.str().back() != '\\')) {
-            in_quotes = !in_quotes;  // Cambia el estado dentro/fuera de comillas
-        } else if (ch == ',' && !in_quotes) {
-            // Si no estamos dentro de comillas, es una separación de columna
-            tokens.push_back(token.str());
-            token.str("");  // Resetea el token
-        } else {
-            // Agrega el carácter al token actual
-            token << ch;
-        }
-    }
-
-    // Añade el último token
-    tokens.push_back(token.str());
-    return tokens;
-}
 
 std::vector<Edge> read_edges(const std::string& filename, const std::unordered_map<long long, int>& node_map) {
     std::vector<Edge> edges;
@@ -324,10 +321,10 @@ std::vector<int> Graph::a_star(int start_id, int goal_id) const {
 }
 
 double Graph::heuristic(int node_id1, int node_id2) const {
-    auto lat1 = std::stod(nodes[node_id1].lat);
-    auto lon1 = std::stod(nodes[node_id1].lon);
-    auto lat2 = std::stod(nodes[node_id2].lat);
-    auto lon2 = std::stod(nodes[node_id2].lon);
+    auto lat1 = nodes[node_id1].lat;
+    auto lon1 = nodes[node_id1].lon;
+    auto lat2 = nodes[node_id2].lat;
+    auto lon2 = nodes[node_id2].lon;
     return std::sqrt(std::pow(lat2 - lat1, 2) + std::pow(lon2 - lon1, 2));
 }
 
