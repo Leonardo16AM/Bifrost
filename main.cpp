@@ -48,7 +48,7 @@ int main() {
     
     for (int i = 0; i < route_inits.size(); i++) {
         //Creamos una ruta desde HOME hasta WORK
-        Route sp(graph,to_string(i),{route_inits[i].home_node_id,route_inits[i].work_node_id}, 3);
+        Route sp(graph,to_string(i),{route_inits[i].home_node_id,route_inits[i].work_node_id}, 10);
         //Hacemos que cada 5 calles tengamos una parada
         sp.stops.pop_back();
         if(sp.nodes.size()==0)continue;

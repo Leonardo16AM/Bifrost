@@ -1,9 +1,15 @@
 #include "simulation.h"
 #include "unordered_map"
+#include <random>
 using namespace std;
 
 
 simulation::simulation(std::vector<Route>buses_,Graph G_,int habitants=100):G(G_),buses(buses_){
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0, 1.0);
+
 
     generate_people(persons, G, habitants); 
     
@@ -17,6 +23,7 @@ simulation::simulation(std::vector<Route>buses_,Graph G_,int habitants=100):G(G_
     int idn=BN.size();
 
     for(auto b:buses){
+        double route_time=5*b.nodes.size();
         for(int i=0;i<b.stops.size();i++){
             
             Node node_wr=BN[b.stops[i]];
@@ -26,7 +33,7 @@ simulation::simulation(std::vector<Route>buses_,Graph G_,int habitants=100):G(G_
             ne.source=b.stops[i];
             ne.target=idn;
             ne.oneway=true;
-            ne.length=10;
+            ne.length=(route_time* dis(gen) )/(double)b.bus_count;
             BE.push_back(ne);
             
             ne.source=idn;
@@ -41,7 +48,7 @@ simulation::simulation(std::vector<Route>buses_,Graph G_,int habitants=100):G(G_
             ne.source=idn-1;
             ne.target=idn;
             ne.oneway=false;
-            ne.length=2.5;
+            ne.length=1;
 
             BE.push_back(ne);
             
