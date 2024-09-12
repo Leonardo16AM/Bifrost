@@ -26,8 +26,8 @@ using namespace std;
 
 
 int BUSES=100;
-int ROUTES=100;
-int PERSONS=100;
+int ROUTES=1;
+int PERSONS=1024;
 
 int main() {
     string nodes_file = "./maps/la_habana_nodes.csv"; 

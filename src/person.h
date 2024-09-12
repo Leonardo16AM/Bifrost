@@ -19,7 +19,7 @@ class Person {
 public:
     Person(int home_node_id_, int work_node_id_);
 
-    int choose_place_based_on_distance(const std::vector<double>& distances);
+    // int choose_place_based_on_distance(const std::vector<double>& distances);
     
     int home_node_id;
     int work_node_id;
@@ -28,8 +28,7 @@ public:
     // int destination;
     // std::vector<int> path;
 
-    double exp_lambda=0.5;
-    double norm_prob=0.7;
+    double phisical_state,patience,money,speed;
 };
 
 void generate_people(std::vector<Person>& people, const Graph& graph, int numPeople);

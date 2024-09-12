@@ -17,7 +17,7 @@ simulation::simulation(std::vector<Route>buses_,Graph G_,int habitants=100):G(G_
     vector<Edge>BE=G.edges;
     
     for(auto &e: BE){
-        e.length=e.length/84.0; // minutos caminando
+        e.length=e.length/84.0;
     }
 
     int idn=BN.size();
@@ -59,6 +59,26 @@ simulation::simulation(std::vector<Route>buses_,Graph G_,int habitants=100):G(G_
     BG=Graph(BN,BE);
 }
 
+double simulation::recursive_sim(std::vector<Person>&subset_pers,std::unordered_set<int> &visitable_nodes ){
+    if( subset_pers.size()==1 ){
+        std::unordered_map<int, std::pair<int, double>>um = BG.dijkstra(subset_pers[0].home_node_id, visitable_nodes);
+        long double sp=um[subset_pers[0].work_node_id].second;
+        return sp; 
+    }
+
+
+    vector<Person>L,R;
+    for(int i=0;i<subset_pers.size()/2;i++){
+        L.push_back(subset_pers[i]);
+    }
+    for(int i=subset_pers.size()/2;i<subset_pers.size();i++){
+        R.push_back(subset_pers[i]);
+    }
+    double dl=recursive_sim(L,visitable_nodes );
+    double dr=recursive_sim(R,visitable_nodes );
+    return (double)(dl+dr)/2.0;
+}
+
 double simulation::simulate(int days){
     unsigned long long sum=0;
     int num_trips=0;
@@ -68,12 +88,6 @@ double simulation::simulate(int days){
         visitable_nodes.insert(i);
     }
 
-    for(int i=0;i<persons.size();i++){
-        std::unordered_map<int, std::pair<int, double>>um = BG.dijkstra(persons[i].home_node_id, visitable_nodes);
-        long double sp=um[persons[i].work_node_id].second;
-        sum+=sp;
-        num_trips++;
-    }
-    return (long double)sum/(long double)num_trips;
+    return recursive_sim(persons,visitable_nodes );
 }
 
