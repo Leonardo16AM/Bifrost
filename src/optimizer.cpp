@@ -68,14 +68,14 @@ private:
 };
 
 // Función que devuelve el id del nodo más cercano dada la latitud y longitud
-int pointToNode(double lat, double lon, const Graph& graph) {
+int pointToNode(double lat, double lon, const Graph& graph, bool wtf) {
     // Definimos el tamaño de la cuadrícula (puede ajustarse según las características del grafo)
     static SpatialGrid spatialGrid(0.01, graph);
     return spatialGrid.nearestNeighbor(lat, lon);
 }
 
 // devuelve el id del nodo mas cercano a la latitud y longitud dada
-int pointToNode(double lat, double lon, const Graph& graph, bool wtf){
+int pointToNode(double lat, double lon, const Graph& graph){
     
     //revisar todos los nodos y devolver el qe este mas cerca
     double minDist = 1e9;
@@ -95,18 +95,22 @@ int pointToNode(double lat, double lon, const Graph& graph, bool wtf){
 
 void Optimize(const Graph& graph, const vector<Person>& people) {
 
-    for(int i=0;i<graph.nodes.size();i++){
-        lats.insert({graph.nodes[i].lat, graph.nodes[i].id});
-        lons.insert({graph.nodes[i].lon, graph.nodes[i].id});
-    }
-
-    // imprimir la mayor y menor latitud y longitud
-    cout<<"lats range: "<<lats.begin()->first<<" "<<lats.rbegin()->first<<"\nlon range:"<<lons.begin()->first<<" "<<lons.rbegin()->first<<endl;
+    
 
 
-    cout<<graph.nodes[3].lat<<" "<<graph.nodes[3].lon<<" NODO 3\n";
-    int nod = pointToNode(22, -82, graph);
-    cout<<"FOUND NODO "<<nod<<" "<<graph.nodes[nod].lat<<" "<<graph.nodes[nod].lon<<"\n";
+
+    // for(int i=0;i<graph.nodes.size();i++){
+    //     lats.insert({graph.nodes[i].lat, graph.nodes[i].id});
+    //     lons.insert({graph.nodes[i].lon, graph.nodes[i].id});
+    // }
+
+    // // imprimir la mayor y menor latitud y longitud
+    // cout<<"lats range: "<<lats.begin()->first<<" "<<lats.rbegin()->first<<"\nlon range:"<<lons.begin()->first<<" "<<lons.rbegin()->first<<endl;
+
+
+    // cout<<graph.nodes[3].lat<<" "<<graph.nodes[3].lon<<" NODO 3\n";
+    // int nod = pointToNode(22, -82, graph);
+    // cout<<"FOUND NODO "<<nod<<" "<<graph.nodes[nod].lat<<" "<<graph.nodes[nod].lon<<"\n";
 
 }
 

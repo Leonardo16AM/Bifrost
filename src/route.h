@@ -7,6 +7,7 @@
 #include "graph.h"
 #include <unordered_set>
 
+using namespace std;
 
 class Route {
 public:
@@ -19,5 +20,7 @@ public:
     double total_distance; 
     sf::Color color;
 };
+
+Route create_route(Graph &graph, std::string id, int starting_node, int ending_node, int bus_count);
 
 #endif // ROUTE_H
