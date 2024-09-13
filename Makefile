@@ -8,8 +8,8 @@ ifeq ($(OS),Windows_NT)
 else
     # Linux settings
     EXECUTABLE = bifrost
-    INCLUDES = -I/usr/include/SFML -I/usr/local/include/fuzzylite
-    LIBS = -L/usr/lib -lsfml-graphics -lsfml-window -lsfml-system -L/usr/local/lib -lfuzzylite
+    INCLUDES = -I/usr/include/SFML
+    LIBS = -L/usr/lib -lsfml-graphics -lsfml-window -lsfml-system
     RM = rm -f
 endif
 

@@ -1,23 +1,5 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <filesystem>
-#include <limits>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
+#include "src/bifrost.h"
 
-#include <SFML/Graphics.hpp>
-
-#include "src/graph.h"
-#include "src/route.h"
-#include "src/person.h"
-#include "src/visualization.h"
-#include "src/inertial_flow.h"
-#include "src/simulation.h"
 
 #define fl '\n'
 #define fs first 
@@ -30,6 +12,22 @@ int ROUTES=100;
 int PERSONS=128;
 
 int main() {
+
+    LLMClient llm;
+    try {
+        std::string response = llm.getResponse("How many Rs are in strawberry");
+        if (!response.empty()) {
+            std::cout << "Respuesta del LLM: " << response << std::endl;
+        }
+        else {
+            std::cout << "No se obtuvo una respuesta del LLM." << std::endl;
+        }
+    }
+    catch(const std::exception& e) {
+        std::cerr << "Error: " << e.what() << '\n';
+    }
+
+
     string nodes_file = "./maps/la_habana_nodes.csv"; 
     string edges_file = "./maps/la_habana_edges.csv";
     
