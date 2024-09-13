@@ -16,8 +16,8 @@ public:
     SpatialGrid(double gridSize, const Graph& graph) : gridSize(gridSize) {
         // Llenamos la cuadrícula con los nodos del grafo
         for (const auto& node : graph.nodes) {
-            double lat = std::stod(node.lat);
-            double lon = std::stod(node.lon);
+            double lat = node.lat;
+            double lon = node.lon;
             auto cell = getCell(lat, lon);
             grid[cell].nodes.push_back(node);
         }
@@ -35,8 +35,8 @@ public:
                 auto neighborCell = std::make_pair(cell.first + i, cell.second + j);
                 if (grid.find(neighborCell) != grid.end()) {
                     for (const auto& node : grid[neighborCell].nodes) {
-                        double nodeLat = std::stod(node.lat);
-                        double nodeLon = std::stod(node.lon);
+                        double nodeLat = node.lat;
+                        double nodeLon = node.lon;
                         double dist = distance(lat, lon, nodeLat, nodeLon);
                         if (dist < minDist) {
                             minDist = dist;
@@ -82,7 +82,7 @@ int pointToNode(double lat, double lon, const Graph& graph, bool wtf){
     int node = -1;
 
     for(int i=0;i<graph.nodes.size();i++){
-        double dist = sqrt((stod(graph.nodes[i].lat)-lat)*(stod(graph.nodes[i].lat)-lat) + (stod(graph.nodes[i].lon)-lon)*(stod(graph.nodes[i].lon)-lon));
+        double dist = sqrt((graph.nodes[i].lat-lat)*(graph.nodes[i].lat-lat) + (graph.nodes[i].lon-lon)*(graph.nodes[i].lon-lon));
         if(dist<minDist){
             minDist = dist;
             node = i;
@@ -96,8 +96,8 @@ int pointToNode(double lat, double lon, const Graph& graph, bool wtf){
 void Optimize(const Graph& graph, const vector<Person>& people) {
 
     for(int i=0;i<graph.nodes.size();i++){
-        lats.insert({stod(graph.nodes[i].lat), graph.nodes[i].id});
-        lons.insert({stod(graph.nodes[i].lon), graph.nodes[i].id});
+        lats.insert({graph.nodes[i].lat, graph.nodes[i].id});
+        lons.insert({graph.nodes[i].lon, graph.nodes[i].id});
     }
 
     // imprimir la mayor y menor latitud y longitud

@@ -26,8 +26,8 @@ using namespace std;
 
 
 int BUSES=100;
-int ROUTES=1;
-int PERSONS=1024;
+int ROUTES=100;
+int PERSONS=128;
 
 int main() {
     string nodes_file = "./maps/la_habana_nodes.csv"; 
@@ -68,7 +68,7 @@ int main() {
         auto start = std::chrono::high_resolution_clock::now();
 
         simulation S(routes,graph,PERSONS);    
-        BEST_RESULTS=S.simulate(7);
+        BEST_RESULTS=S.simulate();
         cout<<"RESULTS: "<< BEST_RESULTS <<endl; 
     
         auto end = std::chrono::high_resolution_clock::now();

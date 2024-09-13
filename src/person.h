@@ -19,14 +19,8 @@ class Person {
 public:
     Person(int home_node_id_, int work_node_id_);
 
-    // int choose_place_based_on_distance(const std::vector<double>& distances);
-    
     int home_node_id;
     int work_node_id;
-
-    // Position current_position;
-    // int destination;
-    // std::vector<int> path;
 
     double phisical_state,patience,money,speed;
 };
