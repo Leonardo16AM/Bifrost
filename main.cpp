@@ -45,27 +45,34 @@ int main() {
     generate_people(route_inits, graph, ROUTES);
     
     for (int i = 0; i < route_inits.size(); i++) {
-        //Creamos una ruta desde HOME hasta WORK
-        Route sp(graph,to_string(i),{route_inits[i].home_node_id,route_inits[i].work_node_id}, 10);
-        //Hacemos que cada 5 calles tengamos una parada
-        sp.stops.pop_back();
-        if(sp.nodes.size()==0)continue;
-        for(int i=0;i<sp.nodes.size()-1;i++){
-            if(i%5==0){
-                sp.stops.push_back(sp.nodes[i]);
-            }
-        }
-        sp.stops.push_back(sp.nodes.back());
-        routes.push_back(sp);
+        // //Creamos una ruta desde HOME hasta WORK
+        // Route sp(graph, to_string(i), {route_inits[i].home_node_id,route_inits[i].work_node_id}, 10);
+        // //Hacemos que cada 5 calles tengamos una parada
+        // sp.stops.pop_back();
+        // if(sp.nodes.size()==0)continue;
+        // for(int i=0;i<sp.nodes.size()-1;i++){
+        //     if(i%5==0){
+        //         sp.stops.push_back(sp.nodes[i]);
+        //     }
+        // }
+        // sp.stops.push_back(sp.nodes.back());
+
+        Route sp = create_route(graph, to_string(i), route_inits[i].home_node_id, route_inits[i].work_node_id, 10);
+
+        if(sp.nodes.size()>0)
+            routes.push_back(sp);
     }
 
     /*-------------------------- SIMULATION STUF --------------------------------------------------*/
+    cout<<"STARTING OPTIMIZATION"<<endl;
+    vector<Route> opt_routes = Optimize(graph, 10, 10);    //persons, routes
+    
     double BEST_RESULTS;
     {
         cout<<"STARTING TEST SIMULATIONS"<<endl;
         auto start = std::chrono::high_resolution_clock::now();
 
-        simulation S(routes,graph,PERSONS);    
+        simulation S(opt_routes, graph, PERSONS);    
         BEST_RESULTS=S.simulate();
         cout<<"RESULTS: "<< BEST_RESULTS <<endl; 
     

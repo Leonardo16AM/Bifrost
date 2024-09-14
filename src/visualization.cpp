@@ -94,6 +94,23 @@ void draw_graph(sf::RenderWindow& window, const Graph& graph, const std::vector<
     window.draw(borders);
     window.draw(lines);
     window.draw(nodes);
+
+    //Dibujar un circulo rojo sobre los nodos 4811 4197
+    sf::CircleShape circle1(5);
+    circle1.setPosition(normalizedNodes[4811].position);
+    circle1.setFillColor(sf::Color::Red);
+    window.draw(circle1);
+
+    sf::CircleShape circle2(5);
+    circle2.setPosition(normalizedNodes[4197].position);
+    circle2.setFillColor(sf::Color::Green);
+    window.draw(circle2);
+
+    sf::CircleShape circle3(5);
+    circle3.setPosition(normalizedNodes[16859].position);
+    circle3.setFillColor(sf::Color::Blue);
+    window.draw(circle3);
+    
 }
 
 

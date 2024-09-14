@@ -22,3 +22,4 @@
 #include "inertial_flow.h"
 #include "simulation.h"
 #include "call_llm.h"
+#include "optimizer.h"
