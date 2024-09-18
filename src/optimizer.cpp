@@ -119,6 +119,9 @@ int pointToNode(double lat, double lon, Graph &graph)
 
 // }
 
+int NUM_PARTICLES = 30;
+int MAX_ITERATIONS = 20;
+
 set<pair<double, int>> lats, lons;
 
 // Estructura para representar una partícula
@@ -139,12 +142,15 @@ double random_double(double min, double max)
 }
 
 // Implementación de la optimización usando PSO
-std::vector<Route> Optimize(Graph &graph, int population, int number_of_routes)
+simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
 {
+    int population = people.size();
+    simulation best_sim;
+
     // Parámetros PSO
-    int num_particles = 30;    // Número de partículas
-    int max_iterations = 20;    // Número máximo de iteraciones
-    double c1 = 1.5, c2 = 1.5; // Coeficientes de aceleración
+    int num_particles = NUM_PARTICLES;    // Número de partículas
+    int max_iterations = MAX_ITERATIONS;    // Número máximo de iteraciones
+    double c1 = 1, c2 = 1.5; // Coeficientes de aceleración: cognitivo y social
     double w = 0.5;            // Factor de inercia
 
     // ordenar las latitudes y longitudes
@@ -170,6 +176,9 @@ std::vector<Route> Optimize(Graph &graph, int population, int number_of_routes)
         for (int i = 0; i < number_of_routes; ++i)
         {
             // Generamos posiciones iniciales aleatorias para cada ruta
+            int delta_lat = lat_max - lat_min;
+            int delta_lon = lon_max - lon_min;
+
             double start_lat = random_double(lat_min, lat_max);
             double start_lon = random_double(lon_min, lon_max);
             double end_lat = random_double(lat_min, lat_max);
@@ -179,8 +188,8 @@ std::vector<Route> Optimize(Graph &graph, int population, int number_of_routes)
             particle.positions.emplace_back(end_lat, end_lon);
 
             // Velocidades iniciales aleatorias
-            particle.velocities.emplace_back(random_double(-1.0, 1.0), random_double(-1.0, 1.0));
-            particle.velocities.emplace_back(random_double(-1.0, 1.0), random_double(-1.0, 1.0));
+            particle.velocities.emplace_back(random_double(-0.1, 0.1), random_double(-0.1, 0.1));
+            particle.velocities.emplace_back(random_double(-0.1, 0.1), random_double(-0.1, 0.1));
         }
         particle.best_positions = particle.positions;
         particle.best_score = std::numeric_limits<double>::infinity();
@@ -216,7 +225,7 @@ std::vector<Route> Optimize(Graph &graph, int population, int number_of_routes)
             if (routes.size() == number_of_routes)
             {
                 // Ejecutar simulación con las rutas generadas
-                simulation S(routes, graph, population);
+                simulation S(routes, graph, people);
                 double score = S.simulate();
 
                 // Actualizar el mejor valor local de la partícula
@@ -231,6 +240,7 @@ std::vector<Route> Optimize(Graph &graph, int population, int number_of_routes)
                 {
                     global_best_score = score;
                     global_best_position = particle.positions; // Ahora asignamos todas las posiciones
+                    best_sim = S;
                 }
             }
             //  cout << "        DEBUG 3" << endl;
@@ -262,5 +272,6 @@ std::vector<Route> Optimize(Graph &graph, int population, int number_of_routes)
         best_routes.push_back(route);
     }
 
-    return best_routes;
+    // return best_routes;
+    return best_sim;
 }

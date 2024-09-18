@@ -17,6 +17,6 @@
 using namespace std;
 
 int pointToNode(double lat, double lon, Graph& graph);
-vector<Route> Optimize(Graph& graph, int population, int number_of_routes);
+simulation Optimize(Graph& graph, vector<Person> &people, int number_of_routes);
 
 #endif 

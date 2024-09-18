@@ -95,53 +95,49 @@ void draw_graph(sf::RenderWindow& window, const Graph& graph, const std::vector<
     window.draw(lines);
     window.draw(nodes);
 
-    //Dibujar un circulo rojo sobre los nodos 4811 4197
-    sf::CircleShape circle1(5);
-    circle1.setPosition(normalizedNodes[4811].position);
-    circle1.setFillColor(sf::Color::Red);
-    window.draw(circle1);
+    //Dibujar un circulo rojo sobre los nodos 4811 4197 16859
+    // sf::CircleShape circle1(5);
+    // circle1.setPosition(normalizedNodes[4811].position);
+    // circle1.setFillColor(sf::Color::Red);
+    // window.draw(circle1);
 
-    sf::CircleShape circle2(5);
-    circle2.setPosition(normalizedNodes[4197].position);
-    circle2.setFillColor(sf::Color::Green);
-    window.draw(circle2);
+    // sf::CircleShape circle2(5);
+    // circle2.setPosition(normalizedNodes[4197].position);
+    // circle2.setFillColor(sf::Color::Green);
+    // window.draw(circle2);
 
-    sf::CircleShape circle3(5);
-    circle3.setPosition(normalizedNodes[16859].position);
-    circle3.setFillColor(sf::Color::Blue);
-    window.draw(circle3);
-    
+    // sf::CircleShape circle3(5);
+    // circle3.setPosition(normalizedNodes[16859].position);
+    // circle3.setFillColor(sf::Color::Blue);
+    // window.draw(circle3);
+
+    // draw_people(window, graph.people, normalizedNodes, graph.edges);
 }
 
 
-// void draw_people(sf::RenderWindow& window, const std::vector<Person>& people, const std::vector<NormalizedNode>& normalizedNodes, const std::vector<Edge>& edges) {
-//     sf::VertexArray personQuads(sf::Quads);
-//     float personSize = 0.2f; 
+void draw_people(sf::RenderWindow& window, const std::vector<Person>& people, const std::vector<NormalizedNode>& normalizedNodes, const std::vector<Edge>& edges) {
+    
+    std::mt19937 gen(123);
 
-//     for (const auto& person : people) {
-//         sf::Vector2f pos;
+    for (const auto& person : people) {
+        sf::Vector2f homePos = normalizedNodes[person.home_node_id].position;
+        sf::Vector2f workPos = normalizedNodes[person.work_node_id].position;
 
-//         if (person.current_position.node_id != -1) {
-//             // Persona está en un nodo
-//             pos = normalizedNodes[person.current_position.node_id].position;
-//         } else {
-//             // Persona está en una arista
-//             const Edge& edge = edges[person.current_position.edge_id];
-//             sf::Vector2f posStart = normalizedNodes[edge.source].position;
-//             sf::Vector2f posEnd = normalizedNodes[edge.target].position;
-            
-//             float edgePos = person.current_position.edge_position;
-//             pos = posStart + edgePos * (posEnd - posStart);
-//         }
+        auto color = generate_light_color();
+        int home_circle_radius = 5;
+        sf::CircleShape circle(home_circle_radius);
+        circle.setPosition(homePos - sf::Vector2f(home_circle_radius, home_circle_radius));  // Centrar el círculo
+        circle.setFillColor(color);
+        window.draw(circle);
 
-//         personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, -personSize / 2), sf::Color::Blue));
-//         personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, -personSize / 2), sf::Color::Blue));
-//         personQuads.append(sf::Vertex(pos + sf::Vector2f(personSize / 2, personSize / 2), sf::Color::Blue));
-//         personQuads.append(sf::Vertex(pos + sf::Vector2f(-personSize / 2, personSize / 2), sf::Color::Blue));
-//     }
-
-//     window.draw(personQuads);
-// }
+        color = generate_light_color();
+        int work_square_size = 10;
+        sf::RectangleShape square(sf::Vector2f(work_square_size, work_square_size));
+        square.setPosition(workPos - sf::Vector2f(work_square_size/2, work_square_size/2));  // Centrar el cuadrado
+        square.setFillColor(color);
+        window.draw(square);
+    }
+}
 
 
 float euclidean_distance(const sf::Vector2f& a, const sf::Vector2f& b) {
