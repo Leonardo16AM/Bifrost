@@ -211,16 +211,26 @@ void simulation::save_simulation_to_csv(const std::string &filename) const
     }
 
     // Guardar la información de los autobuses
-    file << "RouteID,BusCount,TotalDistance,Color,Stops\n";
+    file << "RouteID,BusCount,TotalDistance,Color,Stops,Nodes\n";
     for (const auto &route : buses)
     {
         file << route.id << "," << route.bus_count << ","
              << route.total_distance << ","
              << route.color.toInteger() << ",";
+        // Guardar las paradas
         for (size_t i = 0; i < route.stops.size(); ++i)
         {
             file << route.stops[i];
             if (i < route.stops.size() - 1)
+                file << ";";
+        }
+        file << ",";
+
+        // Guardar los nodos
+        for (size_t i = 0; i < route.nodes.size(); ++i)
+        {
+            file << route.nodes[i];
+            if (i < route.nodes.size() - 1)
                 file << ";";
         }
         file << "\n";
@@ -271,6 +281,7 @@ void simulation::load_simulation_from_csv(const std::string &filename)
         std::getline(ss, token, ',');
         route.color = sf::Color(std::stoul(token));
 
+        // Cargar las paradas
         std::getline(ss, token, ',');
         std::istringstream stops_ss(token);
         std::string stop;
@@ -278,6 +289,16 @@ void simulation::load_simulation_from_csv(const std::string &filename)
         {
             route.stops.push_back(std::stoi(stop));
         }
+
+        // Cargar los nodos
+        std::getline(ss, token, ',');
+        std::istringstream nodes_ss(token);
+        std::string node;
+        while (std::getline(nodes_ss, node, ';'))
+        {
+            route.nodes.push_back(std::stoi(node));
+        }
+
         buses.push_back(route);
     }
 

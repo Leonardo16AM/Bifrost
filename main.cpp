@@ -68,14 +68,14 @@ int main()
     /*-------------------------- SIMULATION STUF --------------------------------------------------*/
     cout << "STARTING OPTIMIZATION" << endl;
 
-    auto start = std::chrono::high_resolution_clock::now();
-    vector<Person> people;
-    generate_people(people, graph, PERSONS);
-    auto best_sim = Optimize(graph, people, ROUTES); // persons, routes
-    vector<Route> routes = best_sim.get_routes();
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Training Time: " << elapsed.count() << " seconds" << std::endl;
+    // auto start = std::chrono::high_resolution_clock::now();
+    // vector<Person> people;
+    // generate_people(people, graph, PERSONS);
+    // auto best_sim = Optimize(graph, people, ROUTES); // persons, routes
+    // vector<Route> routes = best_sim.get_routes();
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed = end - start;
+    // std::cout << "Training Time: " << elapsed.count() << " seconds" << std::endl;
 
 
     cout<< "LOADING FROM FILE" << endl;
