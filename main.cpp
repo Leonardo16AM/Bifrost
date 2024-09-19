@@ -6,8 +6,8 @@
 using namespace std;
 
 int BUSES = 100;
-int ROUTES = 1;
-int PERSONS = 1;
+int ROUTES = 3;
+int PERSONS = 16;
 
 int main()
 {
@@ -77,6 +77,14 @@ int main()
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Training Time: " << elapsed.count() << " seconds" << std::endl;
 
+
+    cout<< "LOADING FROM FILE" << endl;
+    simulation S;
+    S.load_simulation_from_csv("test.csv");
+    vector<Route> routes = S.get_routes();
+    vector<Person> people = S.get_people();
+    simulation best_sim(routes, graph, people);
+
     double BEST_RESULTS;
     {
         cout << "STARTING TEST SIMULATIONS" << endl;
@@ -89,6 +97,15 @@ int main()
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         std::cout << "Time taken: " << elapsed.count() << " seconds" << std::endl;
+    }
+
+    // Saving and loading
+    {
+        cout << "SAVING" << endl;
+        best_sim.save_simulation_to_csv("test.csv");
+        
+        // simulation S;
+        // S.simulate();
     }
 
     /*-------------------------- VISUALIZER STUF --------------------------------------------------*/

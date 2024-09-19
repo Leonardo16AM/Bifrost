@@ -12,7 +12,7 @@
 class Route {
 public:
     Route(Graph &graph,const std::string& id_, const std::vector<int>& stops_, int bus_count_, double total_distance_=0.0, const sf::Color& color_ = sf::Color::Yellow);
-
+    Route();
     std::string id;
     std::vector<int> stops; 
     std::vector<int> nodes; 

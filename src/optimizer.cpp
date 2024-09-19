@@ -120,7 +120,7 @@ int pointToNode(double lat, double lon, Graph &graph)
 // }
 
 int NUM_PARTICLES = 20;
-int MAX_ITERATIONS = 50;
+int MAX_ITERATIONS = 3;
 
 set<pair<double, int>> lats, lons;
 
@@ -188,7 +188,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
             particle.positions.emplace_back(end_lat, end_lon);
 
             // Velocidades iniciales aleatorias
-            double v1 = 0.2;
+            double v1 = 0.3;
             particle.velocities.emplace_back(random_double(-v1, v1), random_double(-v1, v1));
             particle.velocities.emplace_back(random_double(-v1, v1), random_double(-v1, v1));
         }

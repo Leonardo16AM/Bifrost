@@ -20,6 +20,7 @@ class Person
 {
 public:
     Person(int home_node_id_, int work_node_id_);
+    Person();
 
     int home_node_id;
     int work_node_id;

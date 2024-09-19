@@ -1,11 +1,10 @@
 #include "bifrost.h"
 using namespace std;
 
-simulation::simulation(){}
+simulation::simulation() {}
 
 simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> persons_) : G(G_), buses(buses_), persons(persons_)
 {
-
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
@@ -35,7 +34,7 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
             ne.source = b.stops[i];
             ne.target = idn;
             ne.oneway = true;
-            ne.length = (route_time /**/ * dis(gen) ) / (double)b.bus_count;
+            ne.length = (route_time * dis(gen)) / (double)b.bus_count;
             BE.push_back(ne);
 
             ne.source = idn;
@@ -195,4 +194,115 @@ double simulation::simulate(int days)
 std::vector<Route> simulation::get_routes()
 {
     return buses;
+}
+
+std::vector<Person> simulation::get_people()
+{
+    return persons;
+}
+
+void simulation::save_simulation_to_csv(const std::string &filename) const
+{
+    std::ofstream file(filename);
+    if (!file.is_open())
+    {
+        std::cerr << "Error: Unable to open file " << filename << " for saving.\n";
+        return;
+    }
+
+    // Guardar la información de los autobuses
+    file << "RouteID,BusCount,TotalDistance,Color,Stops\n";
+    for (const auto &route : buses)
+    {
+        file << route.id << "," << route.bus_count << ","
+             << route.total_distance << ","
+             << route.color.toInteger() << ",";
+        for (size_t i = 0; i < route.stops.size(); ++i)
+        {
+            file << route.stops[i];
+            if (i < route.stops.size() - 1)
+                file << ";";
+        }
+        file << "\n";
+    }
+
+    // Guardar la información de las personas
+    file << "HomeNodeID,WorkNodeID,PhisicalState,Patience,Money,Speed\n";
+    for (const auto &person : persons)
+    {
+        file << person.home_node_id << ","
+             << person.work_node_id << ","
+             << person.phisical_state << ","
+             << person.patience << ","
+             << person.money << ","
+             << person.speed << "\n";
+    }
+
+    file.close();
+    std::cout << "Simulation data saved to " << filename << ".\n";
+}
+
+// Función para cargar la simulación desde un archivo CSV
+void simulation::load_simulation_from_csv(const std::string &filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        std::cerr << "Error: Unable to open file " << filename << " for loading.\n";
+        return;
+    }
+
+    std::string line, token;
+
+    // Cargar las rutas
+    buses.clear();
+    std::getline(file, line); // Ignorar encabezado
+    while (std::getline(file, line))
+    {
+        if (line == "HomeNodeID,WorkNodeID,PhisicalState,Patience,Money,Speed")
+            break; // Llegamos a la sección de personas
+        std::istringstream ss(line);
+        Route route;
+        std::getline(ss, route.id, ',');
+        std::getline(ss, token, ',');
+        route.bus_count = std::stoi(token);
+        std::getline(ss, token, ',');
+        route.total_distance = std::stod(token);
+        std::getline(ss, token, ',');
+        route.color = sf::Color(std::stoul(token));
+
+        std::getline(ss, token, ',');
+        std::istringstream stops_ss(token);
+        std::string stop;
+        while (std::getline(stops_ss, stop, ';'))
+        {
+            route.stops.push_back(std::stoi(stop));
+        }
+        buses.push_back(route);
+    }
+
+    // Cargar las personas
+    persons.clear();
+    while (std::getline(file, line))
+    {
+        std::istringstream ss(line);
+        Person person;
+        std::getline(ss, token, ',');
+        person.home_node_id = std::stoi(token);
+        std::getline(ss, token, ',');
+        person.work_node_id = std::stoi(token);
+        std::getline(ss, token, ',');
+        person.phisical_state = std::stod(token);
+        std::getline(ss, token, ',');
+        person.patience = std::stod(token);
+        std::getline(ss, token, ',');
+        person.money = std::stod(token);
+        std::getline(ss, token, ',');
+        person.speed = std::stod(token);
+
+        persons.push_back(person);
+    }
+
+    file.close();
+    std::cout << "Simulation data loaded from " << filename << ".\n";
 }

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 
+Person::Person(){}
 
 Person::Person(int home_node_id_, int work_node_id_)
     : home_node_id(home_node_id_), work_node_id(work_node_id_){

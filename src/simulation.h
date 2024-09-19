@@ -5,6 +5,9 @@
 #include "person.h"
 #include "visualization.h"
 #include <vector>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 class simulation
 {
@@ -15,6 +18,9 @@ public:
     double simulate(int days = 7);
     double recursive_sim(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes);
     std::vector<Route> get_routes();
+    std::vector<Person> get_people();
+    void save_simulation_to_csv(const std::string &filename) const;
+    void load_simulation_from_csv(const std::string &filename);
 private:
     Graph G;
     Graph BG;
