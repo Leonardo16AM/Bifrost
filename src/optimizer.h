@@ -6,6 +6,8 @@
 #include <random>
 #include <set>
 #include <utility>
+#include <cmath>
+#include <limits>
 
 #include "graph.h"
 #include "person.h"
@@ -15,6 +17,6 @@
 using namespace std;
 
 int pointToNode(double lat, double lon, Graph& graph);
-void Optimize(const Graph& graph, const vector<Person>& people);
+simulation Optimize(Graph& graph, vector<Person> &people, int number_of_routes);
 
 #endif 

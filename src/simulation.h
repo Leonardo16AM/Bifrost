@@ -5,20 +5,27 @@
 #include "person.h"
 #include "visualization.h"
 #include <vector>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
-
-
-class simulation{
+class simulation
+{
 public:
-    simulation(std::vector<Route>buses_,Graph G_,int habitants);
-    double simulate(int days=7);
-    double recursive_sim(std::vector<Person>&subset_pers,std::unordered_set<int> &visitable_nodes );
+    // simulation(std::vector<Route> buses_, Graph G_, int habitants);
+    simulation(std::vector<Route> buses_, Graph G_, std::vector<Person> persons_);
+    simulation();
+    double simulate(int days = 7);
+    double recursive_sim(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes);
+    std::vector<Route> get_routes();
+    std::vector<Person> get_people();
+    void save_simulation_to_csv(const std::string &filename) const;
+    void load_simulation_from_csv(const std::string &filename);
 private:
     Graph G;
     Graph BG;
-    std::vector<Person>persons;
-    std::vector<Route>buses;
+    std::vector<Person> persons;
+    std::vector<Route> buses;
 };
-
 
 #endif
