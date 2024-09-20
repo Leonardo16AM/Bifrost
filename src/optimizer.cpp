@@ -119,8 +119,8 @@ int pointToNode(double lat, double lon, Graph &graph)
 
 // }
 
-int NUM_PARTICLES = 20;
-int MAX_ITERATIONS = 3;
+int NUM_PARTICLES = 30;
+int MAX_ITERATIONS = 100;
 
 set<pair<double, int>> lats, lons;
 
@@ -148,10 +148,10 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
     simulation best_sim;
 
     // Parámetros PSO
-    int num_particles = NUM_PARTICLES;    // Número de partículas
-    int max_iterations = MAX_ITERATIONS;    // Número máximo de iteraciones
-    double c1 = 1.5, c2 = 2; // Coeficientes de aceleración: cognitivo y social
-    double w = 0.7;            // Factor de inercia
+    int num_particles = NUM_PARTICLES;   // Número de partículas
+    int max_iterations = MAX_ITERATIONS; // Número máximo de iteraciones
+    double c1 = 1.5, c2 = 2;             // Coeficientes de aceleración: cognitivo y social
+    double w = 0.9;                      // Factor de inercia
 
     // ordenar las latitudes y longitudes
     for (int i = 0; i < graph.nodes.size(); i++)
@@ -197,9 +197,9 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
     }
 
     // Bucle principal de PSO
-    for (int iteration = 0; iteration < max_iterations; ++iteration)
+    for (int iteration = 1; iteration <= max_iterations; ++iteration)
     {
-        cout << "    PSO ITER: " << iteration + 1 << "/" << max_iterations << endl;
+        cout << "    PSO ITER: " << iteration << "/" << max_iterations << endl;
         int routecount = 0;
         for (auto &particle : particles)
         {
@@ -207,7 +207,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
             // Crear rutas a partir de las posiciones actuales de la partícula
             // cout << "        DEBUG 1" << endl;
             std::vector<Route> routes;
-            int routes_distance_heuristic = 0;
+            double routes_distance_heuristic = 0;
             for (int i = 0; i < number_of_routes; ++i)
             {
                 // cout << "        DEBUG 1.1 " << particle.positions.size()<< " " << number_of_routes << endl;
@@ -217,21 +217,21 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
                 // cout << "        DEBUG 1.3 " << start_node << " " << end_node << endl;
                 Route route = create_route(graph, "route_" + std::to_string(i), start_node, end_node, 1);
                 // cout << "        DEBUG 1.4" << endl;
-                double dist = 100 * sqrt((particle.positions[i * 2].first - particle.positions[i * 2 + 1].first) * (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first) + (particle.positions[i * 2].second - particle.positions[i * 2 + 1].second) * (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first));
-                
+                double dist = sqrt( (pow( (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first), 2) + pow( (particle.positions[i * 2].second - particle.positions[i * 2 + 1].second), 2)) );
+
                 if (route.nodes.size() > 0)
                 {
                     routes.push_back(route);
                     routes_distance_heuristic += dist;
                 }
-                // cout << "        DEBUG 1.5 " << dist << endl;
+                // cout << "        DEBUG 1.5 " << dist << " " << particle.positions[i * 2].first << " " <<particle.positions[i * 2 + 1].first<< " " <<particle.positions[i * 2].second <<" " << particle.positions[i * 2 + 1].second<< " " << endl;
             }
-            // cout << "        DEBUG 2 " << routes_total_size << endl;
+            cout << "        DEBUG 2 " << routes_distance_heuristic << endl;
             if (routes.size() == number_of_routes)
             {
                 // Ejecutar simulación con las rutas generadas
                 simulation S(routes, graph, people);
-                double score = S.simulate();// + routes_distance_heuristic;
+                double score = S.simulate() + routes_distance_heuristic*50;
 
                 // Actualizar el mejor valor local de la partícula
                 if (score < particle.best_score)
@@ -250,7 +250,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
             }
             //  cout << "        DEBUG 3" << endl;
             // Actualizar la velocidad y posición de la partícula
-            for (int i = 0; i < number_of_routes*2; ++i)
+            for (int i = 0; i < number_of_routes * 2; ++i)
             {
                 particle.velocities[i].first = w * particle.velocities[i].first + c1 * random_double(0, 1) * (particle.best_positions[i].first - particle.positions[i].first) + c2 * random_double(0, 1) * (global_best_position[i].first - particle.positions[i].first);
 
@@ -258,18 +258,28 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
 
                 // Actualizar posición
                 particle.positions[i].first += particle.velocities[i].first;
-                if(particle.positions[i].first > lat_max) particle.positions[i].first = lat_max;
-                if(particle.positions[i].first < lat_min) particle.positions[i].first = lat_min;
+                if (particle.positions[i].first > lat_max)
+                    particle.positions[i].first = lat_max;
+                if (particle.positions[i].first < lat_min)
+                    particle.positions[i].first = lat_min;
 
                 particle.positions[i].second += particle.velocities[i].second;
-                if(particle.positions[i].second > lon_max) particle.positions[i].second = lon_max;
-                if(particle.positions[i].second < lon_min) particle.positions[i].second = lon_min;
+                if (particle.positions[i].second > lon_max)
+                    particle.positions[i].second = lon_max;
+                if (particle.positions[i].second < lon_min)
+                    particle.positions[i].second = lon_min;
             }
             // cout << "        DEBUG 4" << endl;
         }
 
         // imprimir el mejor resultado hasta ahora
-        cout<< "GLOBAL BEST: "<< global_best_score <<endl;
+        cout << "GLOBAL BEST: " << global_best_score << endl;
+
+        if (iteration % 5 == 0)
+        {
+            cout << "SAVING SIMULATION\n";
+            best_sim.save_simulation_to_csv("best_simulation.csv");
+        }
     }
 
     // Devolver las mejores rutas encontradas

@@ -6,8 +6,26 @@
 using namespace std;
 
 int BUSES = 100;
-int ROUTES = 3;
-int PERSONS = 16;
+int ROUTES = 1;
+int PERSONS = 1;
+
+// Función para validar y extraer los datos
+bool parseResponse(const std::string &response, std::string &archivo, int &personas, int &rutas, int &iteraciones, int &particulas)
+{
+    std::regex rgx(R"(archivo:\s*(\w+\.csv),\s*personas:\s*(\d+),\s*rutas:\s*(\d+),\s*iteraciones:\s*(\d+),\s*particulas:\s*(\d+))");
+    std::smatch match;
+
+    if (std::regex_search(response, match, rgx))
+    {
+        archivo = match[1].str();
+        personas = std::stoi(match[2].str());
+        rutas = std::stoi(match[3].str());
+        iteraciones = std::stoi(match[4].str());
+        particulas = std::stoi(match[5].str());
+        return true;
+    }
+    return false;
+}
 
 int main()
 {
@@ -15,10 +33,53 @@ int main()
     LLMClient llm;
     try
     {
-        std::string response = llm.getResponse("How many Rs are in strawberry");
+        std::string initial_prompt =
+            "Te daré una entrada de texto de un usuario, y tu tarea es extraer la siguiente información, asegurándote de devolverla "
+            "en el formato exacto que te indicaré.\n\n"
+            "Datos a extraer:\n"
+            "1. ¿El usuario quiere cargar un archivo? Si es así, devuelve el nombre del archivo en el formato `archivo: nombre.csv`.\n"
+            "2. La cantidad de personas, en el formato `personas: valor`.\n"
+            "3. La cantidad de rutas, en el formato `rutas: valor`.\n"
+            "4. La cantidad de iteraciones para PSO, en el formato `iteraciones: valor`.\n"
+            "5. La cantidad de partículas para PSO, en el formato `particulas: valor`.\n\n"
+            "Si no se proporcionan algunos de estos valores, infiere los siguientes valores predeterminados:\n"
+            " - personas: 500\n"
+            " - iteraciones: 100\n"
+            " - particulas: 30\n\n"
+            "Es muy importante que devuelvas la respuesta **exactamente** en el siguiente formato (sin saltos de línea y con los mismos nombres de campo):\n"
+            "`archivo: nombre.csv, personas: valor, rutas: valor, iteraciones: valor, particulas: valor`.\n"
+            "A continuación, te daré el texto del usuario:\n\n";
+
+        std::string user_input;
+        std::cout << "Introduce el texto del usuario: ";
+        std::getline(std::cin, user_input);
+
+        std::string response = llm.getResponse(initial_prompt + user_input);
+
         if (!response.empty())
         {
             std::cout << "Respuesta del LLM: " << response << std::endl;
+
+            std::string archivo;
+            int personas = 500; // Valor por defecto
+            int rutas = 0;
+            int iteraciones = 100; // Valor por defecto
+            int particulas = 30;   // Valor por defecto
+
+            if (parseResponse(response, archivo, personas, rutas, iteraciones, particulas))
+            {
+                std::cout << "Datos extraídos con éxito:\n";
+                std::cout << "Archivo: " << archivo << "\n";
+                std::cout << "Personas: " << personas << "\n";
+                std::cout << "Rutas: " << rutas << "\n";
+                std::cout << "Iteraciones: " << iteraciones << "\n";
+                std::cout << "Partículas: " << particulas << "\n";
+            }
+            else
+            {
+                std::cout << "No se pudo parsear la respuesta correctamente. Intenta nuevamente." << std::endl;
+                // Aquí podrías incluir un loop para volver a preguntar hasta obtener una respuesta válida
+            }
         }
         else
         {
@@ -77,10 +138,9 @@ int main()
     // std::chrono::duration<double> elapsed = end - start;
     // std::cout << "Training Time: " << elapsed.count() << " seconds" << std::endl;
 
-
-    cout<< "LOADING FROM FILE" << endl;
+    cout << "LOADING FROM FILE" << endl;
     simulation S;
-    S.load_simulation_from_csv("test.csv");
+    S.load_simulation_from_csv("best_simulation.csv");
     vector<Route> routes = S.get_routes();
     vector<Person> people = S.get_people();
     simulation best_sim(routes, graph, people);
@@ -103,7 +163,7 @@ int main()
     {
         cout << "SAVING" << endl;
         best_sim.save_simulation_to_csv("test.csv");
-        
+
         // simulation S;
         // S.simulate();
     }

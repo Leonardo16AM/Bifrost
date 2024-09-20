@@ -33,7 +33,7 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
             Edge ne;
             ne.source = b.stops[i];
             ne.target = idn;
-            ne.oneway = true;
+            ne.oneway = false;
             ne.length = (route_time * dis(gen)) / (double)b.bus_count;
             BE.push_back(ne);
 
