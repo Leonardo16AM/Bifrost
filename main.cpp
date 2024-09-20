@@ -60,7 +60,7 @@ int main()
         {
             std::cout << "Respuesta del LLM: " << response << std::endl;
 
-            std::string archivo;
+            std::string archivo = "";
             int personas = 500; // Valor por defecto
             int rutas = 0;
             int iteraciones = 100; // Valor por defecto
@@ -80,6 +80,10 @@ int main()
                 std::cout << "No se pudo parsear la respuesta correctamente. Intenta nuevamente." << std::endl;
                 // Aquí podrías incluir un loop para volver a preguntar hasta obtener una respuesta válida
             }
+
+            ROUTES = rutas;
+            PERSONS = personas;
+            // Aqui van las demas configuracionaes
         }
         else
         {
