@@ -36,10 +36,10 @@ El proyecto Bifrost persigue alcanzar los siguientes objetivos, alineados con la
    - Implementar lógica difusa y sistemas de conocimiento experto para la toma de decisiones de los usuarios.
    
 2. **Búsqueda:**
-   - Utilizar algoritmos de búsqueda como el recocido simulado (simulated annealing) y/o A* para la optimización de rutas.
+   - Utilizar algoritmos de búsqueda como el PSO (Particle Swarm Optimization) para la optimización de rutas.
 
 3. **Procesamiento de Lenguaje Natural (NLP):**
-   - Se considera la posibilidad de integrar NLP para mejorar la interacción con los usuarios o interpretar datos textuales.
+   - Se integra NLP para mejorar la interacción con los usuarios e interpretar datos textuales.
 
 4. **Simulación:**
    - Desarrollar un sistema de simulación basado en agentes que modela el comportamiento de los pasajeros y la dinámica del transporte público.
@@ -111,7 +111,7 @@ fl::Rule::parse("if Money is High then Decision is Bus", engine);
 
 ### Optimización de Rutas
 
-El algoritmo optimizador ajusta las rutas y la cantidad de autobuses iniciales para mejorar el tiempo promedio de viaje de los usuarios. Se utiliza **recocido simulado (simulated annealing)** como técnica de optimización para explorar el espacio de soluciones y encontrar configuraciones de rutas que minimicen el tiempo de viaje promedio.
+El algoritmo optimizador ajusta las rutas y la cantidad de autobuses iniciales para mejorar el tiempo promedio de viaje de los usuarios. Se utiliza **PSO (Particle Swarn Optimization)** como técnica de optimización para explorar el espacio de soluciones y encontrar configuraciones de rutas que minimicen el tiempo de viaje promedio.
 
 ## Implementación en C++
 

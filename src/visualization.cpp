@@ -142,14 +142,14 @@ void draw_people(sf::RenderWindow &window, const std::vector<Person> &people, co
         int blue = std::rand() % 256;
         auto color = sf::Color(red, green, blue);
 
-        int home_circle_radius = 5;
+        int home_circle_radius = 1;
         sf::CircleShape circle(home_circle_radius);
         circle.setPosition(homePos - sf::Vector2f(home_circle_radius, home_circle_radius)); // Centrar el círculo
         circle.setFillColor(color);
         window.draw(circle);
 
         // auto Reccolor = generate_light_color();
-        int work_square_size = 10;
+        int work_square_size = 2;
         sf::RectangleShape square(sf::Vector2f(work_square_size, work_square_size));
         square.setPosition(workPos - sf::Vector2f(work_square_size / 2, work_square_size / 2)); // Centrar el cuadrado
         square.setFillColor(color);
