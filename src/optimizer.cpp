@@ -142,14 +142,12 @@ double random_double(double min, double max)
 }
 
 // Implementación de la optimización usando PSO
-simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
+simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,int max_iterations,int num_particles)
 {
     int population = people.size();
     simulation best_sim;
 
     // Parámetros PSO
-    int num_particles = NUM_PARTICLES;   // Número de partículas
-    int max_iterations = MAX_ITERATIONS; // Número máximo de iteraciones
     double c1 = 1.5, c2 = 2;             // Coeficientes de aceleración: cognitivo y social
     double w = 0.9;                      // Factor de inercia
 

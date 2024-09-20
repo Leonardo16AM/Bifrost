@@ -67,13 +67,13 @@
 <li>
 <p><strong>Búsqueda:</strong></p>
 <ul>
-<li>Utilizar algoritmos de búsqueda como el recocido simulado (simulated annealing) y/o A* para la optimización de rutas.</li>
+<li>Utilizar algoritmos de búsqueda como el PSO (Particle Swarm Optimization) para la optimización de rutas.</li>
 </ul>
 </li>
 <li>
 <p><strong>Procesamiento de Lenguaje Natural (NLP):</strong></p>
 <ul>
-<li>Se considera la posibilidad de integrar NLP para mejorar la interacción con los usuarios o interpretar datos textuales.</li>
+<li>Se integra NLP para mejorar la interacción con los usuarios e interpretar datos textuales.</li>
 </ul>
 </li>
 <li>
@@ -144,56 +144,62 @@ fl<span class="token double-colon punctuation">::</span><span class="token class
 fl<span class="token double-colon punctuation">::</span><span class="token class-name">Rule</span><span class="token double-colon punctuation">::</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token string">"if Money is High then Decision is Bus"</span><span class="token punctuation">,</span> engine<span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre><p><img src="Pictures/fuzzy.png" alt="Fuzzy"></p>
 <h3 id="optimización-de-rutas">Optimización de Rutas </h3>
-<p>El algoritmo optimizador ajusta las rutas y la cantidad de autobuses iniciales para mejorar el tiempo promedio de viaje de los usuarios. Se utiliza <strong>recocido simulado (simulated annealing)</strong> como técnica de optimización para explorar el espacio de soluciones y encontrar configuraciones de rutas que minimicen el tiempo de viaje promedio.</p>
+<p>El algoritmo optimizador ajusta las rutas y la cantidad de autobuses iniciales para mejorar el tiempo promedio de viaje de los usuarios. Se utiliza <strong>PSO (Particle Swarn Optimization)</strong> como técnica de optimización para explorar el espacio de soluciones y encontrar configuraciones de rutas que minimicen el tiempo de viaje promedio.</p>
 <h2 id="implementación-en-c">Implementación en C++ </h2>
 <p>El proyecto Bifrost está completamente implementado en <strong>C++</strong>, aprovechando su eficiencia y capacidad para manejar grandes volúmenes de datos geoespaciales y simulaciones en tiempo real. Se utilizaron bibliotecas específicas para el procesamiento de datos de OSM, implementación de algoritmos de búsqueda y lógica difusa, así como para la simulación basada en agentes.</p>
 <h2 id="aspectos-de-simulación">Aspectos de Simulación </h2>
 <h3 id="sistema-de-agentes">Sistema de Agentes </h3>
 <p>La simulación se basa en un <strong>sistema de agentes</strong>, donde cada agente representa a una persona que utiliza el transporte público. Los agentes son <strong>proactivos</strong> en sus acciones, buscando activamente llegar a sus destinos de la manera más eficiente posible.</p>
 <h3 id="características-de-los-agentes">Características de los Agentes </h3>
-<p>Cada agente posee las siguientes características:</p>
+<p>Cada agente en la simulación representa a una persona que utiliza el transporte público y está dotado de las siguientes componentes BDI:</p>
 <ul>
 <li>
-<p><strong>Deseos:</strong></p>
+<p><strong>Creencias (Beliefs):</strong></p>
 <ul>
-<li>Llegar a su destino (trabajo o residencia) de manera eficiente.</li>
+<li>Las creencias del agente incluyen la información que posee sobre el sistema de transporte y su entorno. Por ejemplo, un agente puede creer que un autobús llegará a tiempo, que su estado físico es suficiente para caminar largas distancias, o que tiene suficiente dinero para pagar el pasaje. Estas creencias se actualizan a medida que el agente interactúa con el entorno.</li>
 </ul>
 </li>
 <li>
-<p><strong>Miedos:</strong></p>
+<p><strong>Deseos (Desires):</strong></p>
 <ul>
-<li>Que el autobús se demore, lo que podría afectar su tiempo de viaje.</li>
+<li>Los deseos reflejan los objetivos que el agente busca alcanzar. En este caso, el principal deseo de un agente es llegar a su destino de la manera más eficiente posible. Otros deseos pueden incluir minimizar el costo del viaje o evitar el cansancio excesivo.</li>
 </ul>
 </li>
 <li>
-<p><strong>Propiedades Individuales:</strong></p>
+<p><strong>Intenciones (Intentions):</strong></p>
 <ul>
-<li><code>house_node_id</code>, <code>work_node_id</code>, <code>speed</code>, <code>physical_state</code>, <code>patience</code>, <code>money</code>.</li>
+<li>Las intenciones son los planes o acciones que el agente decide llevar a cabo para cumplir sus deseos, basados en sus creencias actuales. Por ejemplo, si un agente cree que el autobús tardará mucho en llegar y desea minimizar su tiempo de viaje, podría decidir caminar en lugar de esperar el autobús. Las intenciones determinan el comportamiento observable del agente en la simulación.</li>
 </ul>
 </li>
 </ul>
 <h3 id="interacción-y-comportamiento">Interacción y Comportamiento </h3>
-<p>Los agentes interactúan con el sistema de transporte público y con otros agentes de la siguiente manera:</p>
-<ul>
+<p>Los agentes interactúan dinámicamente con el entorno  siguiendo un ciclo de toma de decisiones que puede describirse de la siguiente manera:</p>
+<ol>
 <li>
-<p><strong>Decisión de Transporte:</strong></p>
+<p><strong>Actualización de Creencias:</strong></p>
 <ul>
-<li>Basada en lógica difusa, considerando variables como distancia, estado físico, retraso del autobús y disponibilidad económica.</li>
+<li>En cada iteración, los agentes revisan su entorno y actualizan sus creencias. Esto puede incluir información sobre la disponibilidad, los retrasos de los autobuses o su propio estado físico.</li>
 </ul>
 </li>
 <li>
-<p><strong>Respuesta a la Congestión:</strong></p>
+<p><strong>Evaluación de Deseos:</strong></p>
 <ul>
-<li>La demora de un autobús está directamente relacionada con la cantidad de autobuses asignados a una ruta específica, afectando las decisiones futuras de los agentes.</li>
+<li>Basados en sus creencias actualizadas, los agentes evalúan sus deseos. Por ejemplo, si un agente cree que un autobús está demasiado lejos, su deseo de evitar retrasos puede ganar prioridad sobre su deseo de ahorrar dinero.</li>
 </ul>
 </li>
 <li>
-<p><strong>Adaptación:</strong></p>
+<p><strong>Formación de Intenciones:</strong></p>
 <ul>
-<li>Los agentes adaptan sus decisiones en cada iteración de la simulación en función de las condiciones actuales del sistema.</li>
+<li>Una vez que se han evaluado los deseos, los agentes formulan intenciones específicas. Un agente podría decidir tomar un autobús si su creencia es que llegará a tiempo, o podría optar por caminar si su deseo de minimizar el tiempo de viaje es más fuerte.</li>
 </ul>
 </li>
+<li>
+<p><strong>Ejecución de Acciones:</strong></p>
+<ul>
+<li>Finalmente, los agentes ejecutan las acciones correspondientes a sus intenciones, añadiendo asi el tiempo que le tomo llegar a su lugar al conjunto de tiempos que luego son promediados para dar el resultado de la simulacion.</li>
 </ul>
+</li>
+</ol>
 <h2 id="resultados-y-análisis">Resultados y Análisis </h2>
 <p>Tras múltiples iteraciones de la simulación, se obtuvieron los siguientes resultados:</p>
 <ul>

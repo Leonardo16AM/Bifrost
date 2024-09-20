@@ -125,29 +125,33 @@ La simulación se basa en un **sistema de agentes**, donde cada agente represent
 
 ### Características de los Agentes
 
-Cada agente posee las siguientes características:
+Cada agente en la simulación representa a una persona que utiliza el transporte público y está dotado de las siguientes componentes BDI:
 
-- **Deseos:**
-  - Llegar a su destino (trabajo o residencia) de manera eficiente.
+- **Creencias (Beliefs):** 
+  - Las creencias del agente incluyen la información que posee sobre el sistema de transporte y su entorno. Por ejemplo, un agente puede creer que un autobús llegará a tiempo, que su estado físico es suficiente para caminar largas distancias, o que tiene suficiente dinero para pagar el pasaje. Estas creencias se actualizan a medida que el agente interactúa con el entorno.
   
-- **Miedos:**
-  - Que el autobús se demore, lo que podría afectar su tiempo de viaje.
+- **Deseos (Desires):** 
+  - Los deseos reflejan los objetivos que el agente busca alcanzar. En este caso, el principal deseo de un agente es llegar a su destino de la manera más eficiente posible. Otros deseos pueden incluir minimizar el costo del viaje o evitar el cansancio excesivo.
 
-- **Propiedades Individuales:**
-  - `house_node_id`, `work_node_id`, `speed`, `physical_state`, `patience`, `money`.
+- **Intenciones (Intentions):**
+  - Las intenciones son los planes o acciones que el agente decide llevar a cabo para cumplir sus deseos, basados en sus creencias actuales. Por ejemplo, si un agente cree que el autobús tardará mucho en llegar y desea minimizar su tiempo de viaje, podría decidir caminar en lugar de esperar el autobús. Las intenciones determinan el comportamiento observable del agente en la simulación.
 
 ### Interacción y Comportamiento
 
-Los agentes interactúan con el sistema de transporte público y con otros agentes de la siguiente manera:
+Los agentes interactúan dinámicamente con el entorno  siguiendo un ciclo de toma de decisiones que puede describirse de la siguiente manera:
 
-- **Decisión de Transporte:**
-  - Basada en lógica difusa, considerando variables como distancia, estado físico, retraso del autobús y disponibilidad económica.
+1. **Actualización de Creencias:** 
+   - En cada iteración, los agentes revisan su entorno y actualizan sus creencias. Esto puede incluir información sobre la disponibilidad, los retrasos de los autobuses o su propio estado físico.
 
-- **Respuesta a la Congestión:**
-  - La demora de un autobús está directamente relacionada con la cantidad de autobuses asignados a una ruta específica, afectando las decisiones futuras de los agentes.
+2. **Evaluación de Deseos:**
+   - Basados en sus creencias actualizadas, los agentes evalúan sus deseos. Por ejemplo, si un agente cree que un autobús está demasiado lejos, su deseo de evitar retrasos puede ganar prioridad sobre su deseo de ahorrar dinero.
 
-- **Adaptación:**
-  - Los agentes adaptan sus decisiones en cada iteración de la simulación en función de las condiciones actuales del sistema.
+3. **Formación de Intenciones:**
+   - Una vez que se han evaluado los deseos, los agentes formulan intenciones específicas. Un agente podría decidir tomar un autobús si su creencia es que llegará a tiempo, o podría optar por caminar si su deseo de minimizar el tiempo de viaje es más fuerte.
+
+4. **Ejecución de Acciones:**
+   - Finalmente, los agentes ejecutan las acciones correspondientes a sus intenciones, añadiendo asi el tiempo que le tomo llegar a su lugar al conjunto de tiempos que luego son promediados para dar el resultado de la simulacion.
+
 
 ## Resultados y Análisis
 

@@ -1,2 +1,4 @@
 RouteID,BusCount,TotalDistance,Color,Stops,Nodes
+route_0,1,0,4294902015,10709;10709,10709
 HomeNodeID,WorkNodeID,PhisicalState,Patience,Money,Speed
+807,16906,0.991622,0.258063,0.167979,81.1122
