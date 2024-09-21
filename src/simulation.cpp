@@ -56,76 +56,19 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
     BG = Graph(BN, BE);
 }
 
+
 double simulation::simulate_person(Person &person, std::unordered_set<int> &visitable_nodes){
-    fl::Engine* engine = new fl::Engine;
-    engine->setName("DecisionMaking");
-
-    fl::InputVariable* distance = new fl::InputVariable;
-    distance->setName("Distance");
-    distance->setRange(0.0, 10000.0);
-    distance->addTerm(new fl::Triangle("Close", 0.0, 600.0, 1500.0));
-    distance->addTerm(new fl::Triangle("Medium", 1200.0, 1500.0, 2500.0));
-    distance->addTerm(new fl::Triangle("Far", 2300.0, 3500.0, 10000.0));
-    engine->addInputVariable(distance);
-
-    fl::InputVariable* busDelay = new fl::InputVariable;
-    busDelay->setName("BusDelay");
-    busDelay->setRange(0.0, 120.0);
-    busDelay->addTerm(new fl::Triangle("Short", 0.0, 10.0, 20.0));
-    busDelay->addTerm(new fl::Triangle("Medium", 15.0, 30.0, 45.0));
-    busDelay->addTerm(new fl::Triangle("Long", 40.0, 60.0,120.0));
-    engine->addInputVariable(busDelay);
-
-    fl::InputVariable* physicalState = new fl::InputVariable;
-    physicalState->setName("PhysicalState");
-    physicalState->setRange(0.0, 1.0);
-    physicalState->addTerm(new fl::Triangle("Weak", 0.0, 0.25, 0.5));
-    physicalState->addTerm(new fl::Triangle("Average", 0.25, 0.5, 0.75));
-    physicalState->addTerm(new fl::Triangle("Strong", 0.5, 0.75, 1.0));
-    engine->addInputVariable(physicalState);
-
-    fl::InputVariable* money = new fl::InputVariable;
-    money->setName("Money");
-    money->setRange(0.0, 1.0);
-    money->addTerm(new fl::Triangle("Low", 0.0, 0.05, 0.1));
-    money->addTerm(new fl::Triangle("Medium", 0.07, 0.4, 0.75));
-    money->addTerm(new fl::Triangle("High", 0.5, 0.8, 1.0));
-    engine->addInputVariable(money);
-
-    fl::OutputVariable* decision = new fl::OutputVariable;
-    decision->setName("Decision");
-    decision->setRange(0.0, 1.0);
-    decision->setDefaultValue(fl::nan);
-    decision->setDefuzzifier(new fl::Centroid(100));
-    decision->addTerm(new fl::Triangle("Walk", 0.0, 0.0, 0.5));
-    decision->addTerm(new fl::Triangle("Bus", 0.5, 1.0, 1.0));
-    decision->setAggregation(new fl::Maximum);
-    engine->addOutputVariable(decision);
-
-    fl::RuleBlock* rules = new fl::RuleBlock;
-    rules->setName("Rules");
-    rules->setConjunction(new fl::Minimum);
-    rules->setDisjunction(new fl::Maximum);
-    rules->setImplication(new fl::Minimum);
-    rules->setActivation(new fl::General);
-
-    rules->addRule(fl::Rule::parse("if Distance is Far and PhysicalState is Weak then Decision is Bus", engine));
-    rules->addRule(fl::Rule::parse("if Money is Low then Decision is Walk", engine));
-    rules->addRule(fl::Rule::parse("if BusDelay is Long then Decision is Walk", engine));
-    rules->addRule(fl::Rule::parse("if PhysicalState is Strong and Distance is Close then Decision is Walk", engine));
-    rules->addRule(fl::Rule::parse("if Distance is Medium and PhysicalState is Average then Decision is Walk", engine));
-    rules->addRule(fl::Rule::parse("if Money is High then Decision is Bus", engine));
-    engine->addRuleBlock(rules);
+    fl::Engine* engine = FuzzyEngineSingleton::getInstance();
 
     std::unordered_map<int, std::pair<int, double>> um_walk = G.dijkstra(person.home_node_id, visitable_nodes);
-    double walking_distance = um_walk[person.work_node_id].second; // en metros
+    double walking_distance = um_walk[person.work_node_id].second; 
 
-    double delay = 10;
+    double delay = 10.0; 
 
-    distance->setValue(walking_distance);
-    busDelay->setValue(delay);
-    physicalState->setValue(person.phisical_state);
-    money->setValue(person.money);
+    engine->getInputVariable("Distance")->setValue(walking_distance);
+    engine->getInputVariable("BusDelay")->setValue(delay);
+    engine->getInputVariable("PhysicalState")->setValue(person.phisical_state);
+    engine->getInputVariable("Money")->setValue(person.money);
 
     std::string status;
     if (!engine->isReady(&status)) {
@@ -133,18 +76,15 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
     }
 
     engine->process();
-    double decision_value = 0.7;
-    decision_value=decision->getValue();
+    double decision_value = engine->getOutputVariable("Decision")->getValue();
 
     if (decision_value < 0.5){
-        long double sp = um_walk[person.work_node_id].second;
-        delete engine;
-        if(sp==std::numeric_limits<double>::infinity())sp=40.0;
+        double sp = um_walk[person.work_node_id].second;
+        if(sp == std::numeric_limits<double>::infinity()) sp = 40.0;
         return sp / person.speed;
-    }else{
+    } else {
         std::unordered_map<int, std::pair<int, double>> um = BG.dijkstra(person.home_node_id, visitable_nodes);
-        long double sp = um[person.work_node_id].second;
-        delete engine;
+        double sp = um[person.work_node_id].second;
         if (sp == std::numeric_limits<double>::infinity())
             sp = 40.0;
         return sp;
