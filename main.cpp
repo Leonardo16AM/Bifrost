@@ -30,10 +30,10 @@ bool parseResponse(const string &response, string &archivo, int &personas, int &
 int main(){
 
     LLMClient llm;
-    string archivo = "";
-    int personas = 500;
+    string archivo = "nombre.csv";
+    int personas = 10;
     int rutas = 10;
-    int iteraciones = 100;
+    int iteraciones = 5;
     int particulas = 30;  
 
     try
@@ -42,8 +42,9 @@ int main(){
         cout << "Introduce el texto del usuario: ";
         getline(cin, user_input);
         bool can=false;
-
-        while(!can){
+        int tries=0;       
+        while(!can && tries<5){
+            tries++;
             string response = llm.getResponse(user_input);
 
             if (!response.empty())

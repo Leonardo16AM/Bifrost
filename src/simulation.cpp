@@ -60,8 +60,7 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
 double simulation::simulate_person(Person &person, std::unordered_set<int> &visitable_nodes){
     fl::Engine* engine = FuzzyEngineSingleton::getInstance();
 
-    std::unordered_map<int, std::pair<int, double>> um_walk = G.dijkstra(person.home_node_id, visitable_nodes);
-    double walking_distance = um_walk[person.work_node_id].second; 
+    double walking_distance = person.dwalk[person.work_node_id].second; 
 
     double delay = 10.0; 
 
@@ -79,7 +78,7 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
     double decision_value = engine->getOutputVariable("Decision")->getValue();
 
     if (decision_value < 0.5){
-        double sp = um_walk[person.work_node_id].second;
+        double sp = person.dwalk[person.work_node_id].second;
         if(sp == std::numeric_limits<double>::infinity()) sp = 40.0;
         return sp / person.speed;
     } else {
