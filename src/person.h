@@ -16,8 +16,7 @@ struct Position
     float edge_position; // Position on the edge, if applicable
 };
 
-class Person
-{
+class Person{
 public:
     Person(int home_node_id_, int work_node_id_);
     Person();
@@ -25,6 +24,7 @@ public:
     int home_node_id;
     int work_node_id;
 
+    std::unordered_map<int, std::pair<int, double>> dwalk;
     double phisical_state, patience, money, speed;
 };
 

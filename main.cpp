@@ -6,93 +6,72 @@
 using namespace std;
 
 int BUSES = 100;
-int ROUTES = 1;
-int PERSONS = 1;
+int ROUTES = 10;
+int PERSONS = 10;
 
 // Función para validar y extraer los datos
-bool parseResponse(const std::string &response, std::string &archivo, int &personas, int &rutas, int &iteraciones, int &particulas)
+bool parseResponse(const string &response, string &archivo, int &personas, int &rutas, int &iteraciones, int &particulas)
 {
-    std::regex rgx(R"(archivo:\s*(\w+\.csv),\s*personas:\s*(\d+),\s*rutas:\s*(\d+),\s*iteraciones:\s*(\d+),\s*particulas:\s*(\d+))");
-    std::smatch match;
+    regex rgx(R"(.*?([^,\s]+\.csv)\s*,\s*personas:\s*(\d*)\s*,\s*rutas:\s*(\d*)\s*,\s*iteraciones:\s*(\d*)\s*,\s*particulas:\s*(\d*)\.?$)");
+    smatch match;
 
-    if (std::regex_search(response, match, rgx))
+    if (regex_search(response, match, rgx))
     {
         archivo = match[1].str();
-        personas = std::stoi(match[2].str());
-        rutas = std::stoi(match[3].str());
-        iteraciones = std::stoi(match[4].str());
-        particulas = std::stoi(match[5].str());
+        personas = stoi(match[2].str());
+        rutas = stoi(match[3].str());
+        iteraciones = stoi(match[4].str());
+        particulas = stoi(match[5].str());
         return true;
     }
     return false;
 }
 
-int main()
-{
+int main(){
 
     LLMClient llm;
+    string archivo = "nombre.csv";
+    int personas = 65;
+    int rutas = 100;
+    int iteraciones = 10;
+    int particulas = 30;  
+
     try
     {
-        std::string initial_prompt =
-            "Te daré una entrada de texto de un usuario, y tu tarea es extraer la siguiente información, asegurándote de devolverla "
-            "en el formato exacto que te indicaré.\n\n"
-            "Datos a extraer:\n"
-            "1. ¿El usuario quiere cargar un archivo? Si es así, devuelve el nombre del archivo en el formato `archivo: nombre.csv`.\n"
-            "2. La cantidad de personas, en el formato `personas: valor`.\n"
-            "3. La cantidad de rutas, en el formato `rutas: valor`.\n"
-            "4. La cantidad de iteraciones para PSO, en el formato `iteraciones: valor`.\n"
-            "5. La cantidad de partículas para PSO, en el formato `particulas: valor`.\n\n"
-            "Si no se proporcionan algunos de estos valores, infiere los siguientes valores predeterminados:\n"
-            " - personas: 500\n"
-            " - iteraciones: 100\n"
-            " - particulas: 30\n\n"
-            "Es muy importante que devuelvas la respuesta **exactamente** en el siguiente formato (sin saltos de línea y con los mismos nombres de campo):\n"
-            "`archivo: nombre.csv, personas: valor, rutas: valor, iteraciones: valor, particulas: valor`.\n"
-            "A continuación, te daré el texto del usuario:\n\n";
+        string user_input;
+        cout << "Introduce el texto del usuario: ";
+        getline(cin, user_input);
+        bool can=false;
+        int tries=0;       
+        while(!can && tries<1){
+            tries++;
+            string response = llm.getResponse(user_input);
 
-        std::string user_input;
-        std::cout << "Introduce el texto del usuario: ";
-        std::getline(std::cin, user_input);
-
-        std::string response = llm.getResponse(initial_prompt + user_input);
-
-        if (!response.empty())
-        {
-            std::cout << "Respuesta del LLM: " << response << std::endl;
-
-            std::string archivo = "";
-            int personas = 500; // Valor por defecto
-            int rutas = 0;
-            int iteraciones = 100; // Valor por defecto
-            int particulas = 30;   // Valor por defecto
-
-            if (parseResponse(response, archivo, personas, rutas, iteraciones, particulas))
+            if (!response.empty())
             {
-                std::cout << "Datos extraídos con éxito:\n";
-                std::cout << "Archivo: " << archivo << "\n";
-                std::cout << "Personas: " << personas << "\n";
-                std::cout << "Rutas: " << rutas << "\n";
-                std::cout << "Iteraciones: " << iteraciones << "\n";
-                std::cout << "Partículas: " << particulas << "\n";
+                cout << "Respuesta del LLM: " << response << endl;
+                if (parseResponse(response, archivo, personas, rutas, iteraciones, particulas))
+                {
+                    cout << "==Datos extraidos con exito:\n";
+                    cout << "  Archivo: " << archivo << "\n";
+                    cout << "  Personas: " << personas << "\n";
+                    cout << "  Rutas: " << rutas << "\n";
+                    cout << "  Iteraciones: " << iteraciones << "\n";
+                    cout << "  Partículas: " << particulas << "\n";
+                    can=true;
+                }else{
+                    cout << "No se pudo parsear la respuesta correctamente. Intenta nuevamente." << endl;
+                }
+                
+                ROUTES = rutas;
+                PERSONS = personas;
+            }else{
+                cout << "No se obtuvo una respuesta del LLM." << endl;
             }
-            else
-            {
-                std::cout << "No se pudo parsear la respuesta correctamente. Intenta nuevamente." << std::endl;
-                // Aquí podrías incluir un loop para volver a preguntar hasta obtener una respuesta válida
-            }
-
-            ROUTES = rutas;
-            PERSONS = personas;
-            // Aqui van las demas configuracionaes
-        }
-        else
-        {
-            std::cout << "No se obtuvo una respuesta del LLM." << std::endl;
         }
     }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error: " << e.what() << '\n';
+    catch (const exception &e){
+        cerr << "Error: " << e.what() << '\n';
     }
 
     string nodes_file = "./maps/la_habana_nodes.csv";
@@ -101,77 +80,46 @@ int main()
     printf("BUILDING MAP GRAPH\n");
     Graph graph = build_map(nodes_file, edges_file);
     // graph=graph.to_bidirectional();
-    cout << "CALCULATING INERTIAL FLOW\n";
-    map<int, int> node_partition = inertial_flow_partition_map(graph);
+    // cout << "CALCULATING INERTIAL FLOW\n";
+    // map<int, int> node_partition = inertial_flow_partition_map(graph);
 
     cout << "CREATING TEST ROUTES" << endl;
-
-    // // Generamos 100 rutas random (fijate que las persons que usamos ahi no sirven para nada, es solo para generar los inicios y fiin de las rutas)
-    // vector<Route> routes = {};
-    // vector<Person> route_inits;
-    // generate_people(route_inits, graph, ROUTES);
-
-    // for (int i = 0; i < route_inits.size(); i++) {
-    //     // //Creamos una ruta desde HOME hasta WORK
-    //     // Route sp(graph, to_string(i), {route_inits[i].home_node_id,route_inits[i].work_node_id}, 10);
-    //     // //Hacemos que cada 5 calles tengamos una parada
-    //     // sp.stops.pop_back();
-    //     // if(sp.nodes.size()==0)continue;
-    //     // for(int i=0;i<sp.nodes.size()-1;i++){
-    //     //     if(i%5==0){
-    //     //         sp.stops.push_back(sp.nodes[i]);
-    //     //     }
-    //     // }
-    //     // sp.stops.push_back(sp.nodes.back());
-
-    //     Route sp = create_route(graph, to_string(i), route_inits[i].home_node_id, route_inits[i].work_node_id, 10);
-
-    //     if(sp.nodes.size()>0)
-    //         routes.push_back(sp);
-    // }
 
     /*-------------------------- SIMULATION STUF --------------------------------------------------*/
     cout << "STARTING OPTIMIZATION" << endl;
 
-    // auto start = std::chrono::high_resolution_clock::now();
-    // vector<Person> people;
-    // generate_people(people, graph, PERSONS);
-    // auto best_sim = Optimize(graph, people, ROUTES); // persons, routes
-    // vector<Route> routes = best_sim.get_routes();
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "Training Time: " << elapsed.count() << " seconds" << std::endl;
 
-    cout << "LOADING FROM FILE" << endl;
-    simulation S;
-    S.load_simulation_from_csv("best_simulation.csv");
-    vector<Route> routes = S.get_routes();
-    vector<Person> people = S.get_people();
-    simulation best_sim(routes, graph, people);
-
-    double BEST_RESULTS;
-    {
-        cout << "STARTING TEST SIMULATIONS" << endl;
-        auto start = std::chrono::high_resolution_clock::now();
-
-        // simulation S(routes, graph, people);
-        BEST_RESULTS = best_sim.simulate();
-        cout << "RESULTS: " << BEST_RESULTS << endl;
-
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = end - start;
-        std::cout << "Time taken: " << elapsed.count() << " seconds" << std::endl;
-    }
-
-    // Saving and loading
-    {
-        cout << "SAVING" << endl;
+    simulation S,best_sim;
+    vector<Route> routes;
+    vector<Person> people;
+    
+    
+    if("nombre.csv"==archivo){
+        auto start = chrono::high_resolution_clock::now();
+        generate_people(people, graph, PERSONS);
+        best_sim = Optimize(graph, people, ROUTES,iteraciones,particulas); 
+        routes = best_sim.get_routes();
+        auto end = chrono::high_resolution_clock::now();
+        chrono::duration<double> elapsed = end - start;
+        cout << "Training Time: " << elapsed.count() << " seconds" << endl;
+    }else{
+        cout << "LOADING FROM FILE" << endl;
+        S.load_simulation_from_csv(archivo);
+        routes = S.get_routes();
+        people = S.get_people();
+        simulation best_sim(routes, graph, people);
         best_sim.save_simulation_to_csv("test.csv");
-
-        // simulation S;
-        // S.simulate();
     }
-
+    
+    double BEST_RESULTS;
+    
+    // {
+    //     cout << "STARTING TEST SIMULATIONS" << endl;
+    //     BEST_RESULTS = best_sim.simulate();
+    //     cout << "RESULTS: " << BEST_RESULTS << endl;
+    // }
+    
+    
     /*-------------------------- VISUALIZER STUF --------------------------------------------------*/
     {
         sf::RenderWindow window(sf::VideoMode(1600, 900), "Bifrost - Interactive Simulation");

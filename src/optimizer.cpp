@@ -142,14 +142,12 @@ double random_double(double min, double max)
 }
 
 // Implementación de la optimización usando PSO
-simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
+simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,int max_iterations,int num_particles)
 {
     int population = people.size();
     simulation best_sim;
 
     // Parámetros PSO
-    int num_particles = NUM_PARTICLES;   // Número de partículas
-    int max_iterations = MAX_ITERATIONS; // Número máximo de iteraciones
     double c1 = 1.5, c2 = 2;             // Coeficientes de aceleración: cognitivo y social
     double w = 0.9;                      // Factor de inercia
 
@@ -160,7 +158,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
         lons.insert({graph.nodes[i].lon, graph.nodes[i].id});
     }
     // imprimir la mayor y menor latitud y longitud
-    cout << "lats range from " << lats.begin()->first << " to " << lats.rbegin()->first << "\nlons range from " << lons.begin()->first << " to " << lons.rbegin()->first << endl;
+    // cout << "lats range from " << lats.begin()->first << " to " << lats.rbegin()->first << "\nlons range from " << lons.begin()->first << " to " << lons.rbegin()->first << endl;
 
     // Límites del plano (esto puede depender de tu grafo)
     double lat_min = lats.begin()->first, lat_max = lats.rbegin()->first;
@@ -215,7 +213,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
                 // cout << "        DEBUG 1.2" << endl;
                 int end_node = pointToNode(particle.positions[i * 2 + 1].first, particle.positions[i * 2 + 1].second, graph);
                 // cout << "        DEBUG 1.3 " << start_node << " " << end_node << endl;
-                Route route = create_route(graph, "route_" + std::to_string(i), start_node, end_node, 1);
+                Route route = create_route(graph, "route_" + std::to_string(i), start_node, end_node, 5);
                 // cout << "        DEBUG 1.4" << endl;
                 double dist = sqrt( (pow( (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first), 2) + pow( (particle.positions[i * 2].second - particle.positions[i * 2 + 1].second), 2)) );
 
@@ -226,7 +224,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
                 }
                 // cout << "        DEBUG 1.5 " << dist << " " << particle.positions[i * 2].first << " " <<particle.positions[i * 2 + 1].first<< " " <<particle.positions[i * 2].second <<" " << particle.positions[i * 2 + 1].second<< " " << endl;
             }
-            cout << "        DEBUG 2 " << routes_distance_heuristic << endl;
+            // cout << "        DEBUG 2 " << routes_distance_heuristic << endl;
             if (routes.size() == number_of_routes)
             {
                 // Ejecutar simulación con las rutas generadas
@@ -288,7 +286,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes)
     {
         int start_node = pointToNode(global_best_position[i * 2].first, global_best_position[i * 2].second, graph);
         int end_node = pointToNode(global_best_position[i * 2 + 1].first, global_best_position[i * 2 + 1].second, graph);
-        Route route = create_route(graph, "route_" + std::to_string(i), start_node, end_node, 1);
+        Route route = create_route(graph, "route_" + std::to_string(i), start_node, end_node, 5);
         best_routes.push_back(route);
     }
 

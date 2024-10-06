@@ -13,7 +13,7 @@
 #include <random>
 #include <regex>
 
-// #include <fl/Headers.h>
+#include <fl/Headers.h>
 #include <SFML/Graphics.hpp>
 
 #include "graph.h"
@@ -24,3 +24,5 @@
 #include "simulation.h"
 #include "call_llm.h"
 #include "optimizer.h"
+
+#include "FuzzyEngineSingleton.h"
