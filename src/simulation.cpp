@@ -90,34 +90,40 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
     }
 }
 
-double simulation::average_sim(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes){
-    if (subset_pers.size() == 1)
-        simulate_person(subset_pers[0],visitable_nodes);
-
-    vector<Person> L, R;
-    for (int i = 0; i < subset_pers.size() / 2; i++){
-        L.push_back(subset_pers[i]);
-    }
-    for (int i = subset_pers.size() / 2; i < subset_pers.size(); i++){
-        R.push_back(subset_pers[i]);
-    }
-    double dl = average_sim(L, visitable_nodes);
-    double dr = average_sim(R, visitable_nodes);
-    return (double)(dl + dr) / 2.0;
-}
-
-double simulation::percentil90_sim(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes){
+vector<double> simulation::simulate_persons(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes){
     vector<double>vals;
     for(auto& pers:subset_pers){
         vals.push_back(simulate_person(pers,visitable_nodes));
     }
+    return vals;
+}
+
+
+double simulation::average(vector<double> &vals){
+    if (vals.size() == 1)
+        return vals[0];
+
+    vector<double> L, R;
+    for (int i = 0; i < vals.size() / 2; i++){
+        L.push_back(vals[i]);
+    }
+    for (int i = vals.size() / 2; i < vals.size(); i++){
+        R.push_back(vals[i]);
+    }
+    double dl = average(L);
+    double dr = average(R);
+    return (double)(dl + dr) / 2.0;
+}
+
+
+double simulation::CVaR90(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes){
+    vector<double>vals=simulate_persons(subset_pers,visitable_nodes);
     sort(vals.begin(),vals.end());
+    reverse(vals.begin(),vals.end());
 
      if(vals.empty()){
-        // Manejar el caso donde no hay valores
         return 0.0;
     }
-    
     double pos = 0.9 * static_cast<double>(vals.size());
     size_t index = static_cast<size_t>(std::ceil(pos)) - 1; 
     
@@ -125,7 +131,23 @@ double simulation::percentil90_sim(std::vector<Person> &subset_pers, std::unorde
         index = vals.size() - 1;
     }
     
-    return vals[index];
+    int nindex=0;
+    for(int i=0;i<20;i++){
+        if( (1<<i)>=vals.size())break;
+
+        if( (1<<i) >= index){
+            nindex=(1<<i);
+            break;
+        }else{
+            nindex=(1<<i);
+        }
+    }
+    index=nindex;
+    vector<double>to_avg;
+    for(int i=0;i<=index;i++){
+        to_avg.push_back(vals[i]);
+    }
+    return average(to_avg);
 }
 
 double simulation::simulate(int days){
@@ -137,7 +159,7 @@ double simulation::simulate(int days){
         visitable_nodes.insert(i);
     }
 
-    return percentil90_sim(persons, visitable_nodes);
+    return CVaR90(persons, visitable_nodes);
 }
 
 std::vector<Route> simulation::get_routes(){

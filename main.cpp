@@ -6,8 +6,8 @@
 using namespace std;
 
 int BUSES = 100;
-int ROUTES = 1;
-int PERSONS = 1;
+int ROUTES = 10;
+int PERSONS = 10;
 
 // Función para validar y extraer los datos
 bool parseResponse(const string &response, string &archivo, int &personas, int &rutas, int &iteraciones, int &particulas)
@@ -31,9 +31,9 @@ int main(){
 
     LLMClient llm;
     string archivo = "nombre.csv";
-    int personas = 10;
-    int rutas = 10;
-    int iteraciones = 5;
+    int personas = 65;
+    int rutas = 100;
+    int iteraciones = 10;
     int particulas = 30;  
 
     try
@@ -43,7 +43,7 @@ int main(){
         getline(cin, user_input);
         bool can=false;
         int tries=0;       
-        while(!can && tries<5){
+        while(!can && tries<1){
             tries++;
             string response = llm.getResponse(user_input);
 
@@ -80,8 +80,8 @@ int main(){
     printf("BUILDING MAP GRAPH\n");
     Graph graph = build_map(nodes_file, edges_file);
     // graph=graph.to_bidirectional();
-    cout << "CALCULATING INERTIAL FLOW\n";
-    map<int, int> node_partition = inertial_flow_partition_map(graph);
+    // cout << "CALCULATING INERTIAL FLOW\n";
+    // map<int, int> node_partition = inertial_flow_partition_map(graph);
 
     cout << "CREATING TEST ROUTES" << endl;
 
