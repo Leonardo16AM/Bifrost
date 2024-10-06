@@ -24,6 +24,7 @@ public:
     int home_node_id;
     int work_node_id;
 
+    std::vector<std::pair<int,double>>beliefs;
     std::unordered_map<int, std::pair<int, double>> dwalk;
     double phisical_state, patience, money, speed;
 };

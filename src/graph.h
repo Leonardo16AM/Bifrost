@@ -64,6 +64,7 @@ public:
     std::vector<Edge> edges;
     std::unordered_map<int, std::vector<std::pair<int, int>>> adj_list;
     std::vector<int> reconstruct_path(int start_id, int goal_id, const std::unordered_map<int, std::pair<int, double>>& dijkstra_result) const;
+    std::vector<std::pair<int,double>> update_from_beliefs(std::vector<std::pair<int,double>> beliefs);
     Graph to_bidirectional() const;
 
 private:

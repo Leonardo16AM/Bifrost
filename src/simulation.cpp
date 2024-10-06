@@ -8,8 +8,6 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
-    // generate_people(persons, G, habitants);
-
     vector<Node> BN = G.nodes;
     vector<Edge> BE = G.edges;
 
@@ -18,6 +16,8 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
     }
 
     int idn = BN.size();
+
+    std::vector<pair<int,double>>base_beliefs;
 
     for (auto b : buses){
         double route_time = 5 * b.nodes.size();
@@ -31,8 +31,9 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
             ne.target = idn;
             ne.oneway = false;
             ne.length = (route_time * dis(gen)) / (double)b.bus_count;
+            base_beliefs.push_back({BE.size(),ne.length});
             BE.push_back(ne);
-
+            
             ne.source = idn;
             ne.target = b.stops[i];
             ne.oneway = true;
@@ -46,11 +47,14 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
             ne.target = idn;
             ne.oneway = false;
             ne.length = 1;
-
+            base_beliefs.push_back({BE.size(),ne.length} );
             BE.push_back(ne);
 
             idn++;
         }
+    }
+    for(auto& p:persons){
+        p.beliefs=base_beliefs;
     }
 
     BG = Graph(BN, BE);
@@ -82,10 +86,14 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
         if(sp == std::numeric_limits<double>::infinity()) sp = 40.0;
         return sp / person.speed;
     } else {
+        std::vector<std::pair<int,double>> old_beliefs=BG.update_from_beliefs(person.beliefs);
+
         std::unordered_map<int, std::pair<int, double>> um = BG.dijkstra(person.home_node_id, visitable_nodes);
         double sp = um[person.work_node_id].second;
         if (sp == std::numeric_limits<double>::infinity())
             sp = 40.0;
+
+        BG.update_from_beliefs(old_beliefs);    
         return sp;
     }
 }

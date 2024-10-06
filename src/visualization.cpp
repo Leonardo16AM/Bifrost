@@ -131,7 +131,7 @@ void draw_people(sf::RenderWindow &window, const std::vector<Person> &people, co
 
     std::mt19937 gen(123);
 
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    std::srand(static_cast<unsigned int>(std::time(nullptr)/120));
     for (const auto &person : people)
     {
         sf::Vector2f homePos = normalizedNodes[person.home_node_id].position;
