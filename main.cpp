@@ -31,10 +31,10 @@ int main(){
 
     LLMClient llm;
     string archivo = "nombre.csv";
-    int personas = 65;
-    int rutas = 100;
-    int iteraciones = 10;
-    int particulas = 30;  
+    int personas = 65;      //CHANGE DEFAULT
+    int rutas = 100;        //CHANGE DEFAULT
+    int iteraciones = 1;    //CHANGE DEFAULT
+    int particulas = 1;    //CHANGE DEFAULT
 
     try
     {
@@ -107,7 +107,8 @@ int main(){
         S.load_simulation_from_csv(archivo);
         routes = S.get_routes();
         people = S.get_people();
-        simulation best_sim(routes, graph, people);
+        vector<double>emp;
+        simulation best_sim(routes, graph, people,emp);
         best_sim.save_simulation_to_csv("test.csv");
     }
     
@@ -119,6 +120,19 @@ int main(){
     //     cout << "RESULTS: " << BEST_RESULTS << endl;
     // }
     
+    
+    {//---------------------------NEW SIMULATION TEST--------------------------------
+        people.clear();
+        generate_people(people, graph, 1);
+        people[0].home_node_id=770;
+        people[0].work_node_id=21208;
+        routes.clear();
+        routes.push_back(create_route(graph, "manual_route_1", 20620, 5104, 5));
+        cout<<"|___ Created one person to test"<<endl;
+        vector<double>emp;
+        simulation S=simulation(routes, graph, people,emp);
+        cout<<"|___ ___ ___ "<<S.simulate()<<endl;
+    }
     
     /*-------------------------- VISUALIZER STUF --------------------------------------------------*/
     {

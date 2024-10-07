@@ -51,7 +51,7 @@ The problem involves optimizing public transportation in a city represented as a
 
      These fuzzy rules, defined in the fuzzy logic engine, help agents make decisions based on their attributes and beliefs about the environment. For example, if an agent perceives the distance to be far and their physical state to be weak, they are more likely to choose taking a bus. Conversely, if they perceive a long bus delay, they may opt to walk.
      
-   ![Fuzzy](Pictures/fuzzy.png)
+![Fuzzy](Pictures/fuzzy.png)  
 
 
 **Optimization**

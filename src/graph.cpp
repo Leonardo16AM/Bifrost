@@ -14,6 +14,15 @@ Graph::Graph(const std::vector<Node>& nodes_, const std::vector<Edge>& edges_)
     }
 }
 
+std::vector<std::pair<int,double>> Graph::update_from_beliefs(std::vector<std::pair<int,double>> beliefs){
+    std::vector<std::pair<int,double>> old_beliefs;
+    for(auto b:beliefs){
+        old_beliefs.push_back( {b.first,edges[b.first].length} );
+        edges[b.first].length=b.second;
+    }
+    return old_beliefs;
+}
+
 Graph::Graph(){
     
 }

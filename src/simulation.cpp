@@ -1,14 +1,52 @@
 #include "bifrost.h"
 using namespace std;
 
+bool event::operator<(const event& other) const {
+    return time > other.time;
+}
+
+
+double sim_person::move(){
+    current_stop++;
+    return distances[current_stop-1];
+}
+
+bool sim_person::on_work(){
+    return current_stop==distances.size()-1;
+}
+
+
+double sim_bus::move(){
+    if(current_stop==stops.size()-1){
+        reverse(stops.begin(),stops.end());
+        reverse(distances.begin(),distances.end());
+        visited.clear();
+        visited.insert(stops[0]);
+        current_stop=1;
+        return distances[0];
+    }
+    visited.insert(stops[current_stop]);
+    current_stop++;
+    return distances[current_stop-1];
+}
+
+vector<int> sim_bus::leave_on_stop(){
+    vector<int>ret= passengers[stops[current_stop]];
+    passengers[stops[current_stop]].clear();
+    return ret;
+}
+
+bool sim_bus::on_direction(int node){
+    return visited.find(node)!=visited.end();
+}
+
+
 simulation::simulation() {}
 
-simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> persons_) : G(G_), buses(buses_), persons(persons_){
+simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> &persons_,vector<double>&cost_per_person) : G(G_), buses(buses_), persons(persons_){
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
-
-    // generate_people(persons, G, habitants);
 
     vector<Node> BN = G.nodes;
     vector<Edge> BE = G.edges;
@@ -18,21 +56,28 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
     }
 
     int idn = BN.size();
+    int original_n=BN.size();
+
+    vector<pair<int,double>>base_beliefs;
+    vector<vector<int>>exp_nodes;
 
     for (auto b : buses){
         double route_time = 5 * b.nodes.size();
+        vector<int>exp;
         for (int i = 0; i < b.stops.size(); i++){
 
             Node node_wr = BN[b.stops[i]];
             BN.push_back(node_wr);
 
+            exp.push_back(idn);
             Edge ne;
             ne.source = b.stops[i];
             ne.target = idn;
             ne.oneway = false;
             ne.length = (route_time * dis(gen)) / (double)b.bus_count;
+            base_beliefs.push_back({BE.size(),ne.length});
             BE.push_back(ne);
-
+            
             ne.source = idn;
             ne.target = b.stops[i];
             ne.oneway = true;
@@ -46,14 +91,63 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> perso
             ne.target = idn;
             ne.oneway = false;
             ne.length = 1;
-
+            base_beliefs.push_back({BE.size(),ne.length} );
             BE.push_back(ne);
 
             idn++;
         }
+        exp_nodes.push_back(exp);
     }
 
     BG = Graph(BN, BE);
+
+
+    unordered_set<int>visitable_nodes;
+    for(int i=0;i<=BN.size();i++)visitable_nodes.insert(i);
+    
+    for(int i=0;i<persons.size();i++){
+        if(persons[i].beliefs.size()==0)persons[i].beliefs=base_beliefs;
+        sim_person p;
+        p.id=0;
+
+        std::vector<std::pair<int,double>> old_beliefs=BG.update_from_beliefs(persons[i].beliefs);
+        auto dijkstra_result = BG.dijkstra(persons[i].home_node_id, visitable_nodes);
+        vector<int> shortest_path = BG.reconstruct_path(persons[i].home_node_id, persons[i].work_node_id, dijkstra_result);
+
+        double sp=dijkstra_result[persons[i].work_node_id].second;
+        if (sp == std::numeric_limits<double>::infinity())
+                sp = 40.0;
+        cost_per_person.push_back(sp);
+
+        p.path_nodes=shortest_path;
+        for(auto it:shortest_path){
+            if(it>original_n)cout<<"<<< ";
+            cout<<">>> >>>"<<it<<endl;
+        }
+        BG.update_from_beliefs(old_beliefs);    
+        // UPDATE p.distances;
+        sim_persons.push_back(p);
+    }
+
+    for(int i=0;i<buses.size();i++){
+        for(int j=0;j<buses[i].bus_count;j++){
+            sim_bus b;
+            b.route_id=i;
+            b.id=sim_buses.size();
+            b.stops=exp_nodes[i];
+            b.distances=vector<double>(0.5);
+            
+            if(std::rand()%2==0)
+                std::reverse(b.stops.begin(), b.stops.end());
+            
+            b.current_stop = std::rand() % b.stops.size();
+            for(int h=0;h<=b.current_stop;h++){
+                b.visited.insert(b.stops[h]);
+            } 
+
+            sim_buses.push_back(b);
+        }
+    }
 }
 
 
@@ -82,10 +176,14 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
         if(sp == std::numeric_limits<double>::infinity()) sp = 40.0;
         return sp / person.speed;
     } else {
+        std::vector<std::pair<int,double>> old_beliefs=BG.update_from_beliefs(person.beliefs);
+
         std::unordered_map<int, std::pair<int, double>> um = BG.dijkstra(person.home_node_id, visitable_nodes);
         double sp = um[person.work_node_id].second;
         if (sp == std::numeric_limits<double>::infinity())
             sp = 40.0;
+
+        BG.update_from_beliefs(old_beliefs);    
         return sp;
     }
 }
@@ -97,7 +195,6 @@ vector<double> simulation::simulate_persons(std::vector<Person> &subset_pers, st
     }
     return vals;
 }
-
 
 double simulation::average(vector<double> &vals){
     if (vals.size() == 1)
@@ -114,7 +211,6 @@ double simulation::average(vector<double> &vals){
     double dr = average(R);
     return (double)(dl + dr) / 2.0;
 }
-
 
 double simulation::CVaR90(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes){
     vector<double>vals=simulate_persons(subset_pers,visitable_nodes);
@@ -215,7 +311,6 @@ void simulation::save_simulation_to_csv(const std::string &filename) const{
     std::cout << "Simulation data saved to " << filename << ".\n";
 }
 
-// Función para cargar la simulación desde un archivo CSV
 void simulation::load_simulation_from_csv(const std::string &filename){
     std::ifstream file(filename);
     if (!file.is_open()){
