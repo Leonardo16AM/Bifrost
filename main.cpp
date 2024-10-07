@@ -130,8 +130,11 @@ int main(){
         routes.push_back(create_route(graph, "manual_route_1", 20620, 5104, 5));
         cout<<"|___ Created one person to test"<<endl;
         vector<double>emp;
-        simulation S=simulation(routes, graph, people,emp);
+        simulation S=simulation(routes, graph, people,emp,true);
         cout<<"|___ ___ ___ "<<S.simulate()<<endl;
+        double s=S.events_simulate();
+        cout<<"|___ ___ ___ "<<s<<endl;
+    
     }
     
     /*-------------------------- VISUALIZER STUF --------------------------------------------------*/
