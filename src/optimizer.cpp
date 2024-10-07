@@ -228,7 +228,8 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
             if (routes.size() == number_of_routes)
             {
                 // Ejecutar simulación con las rutas generadas
-                simulation S(routes, graph, people);
+                vector<double>emp;
+                simulation S(routes, graph, people,emp);
                 double score = S.simulate() + routes_distance_heuristic*50;
 
                 // Actualizar el mejor valor local de la partícula

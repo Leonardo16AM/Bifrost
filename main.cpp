@@ -107,7 +107,8 @@ int main(){
         S.load_simulation_from_csv(archivo);
         routes = S.get_routes();
         people = S.get_people();
-        simulation best_sim(routes, graph, people);
+        vector<double>emp;
+        simulation best_sim(routes, graph, people,emp);
         best_sim.save_simulation_to_csv("test.csv");
     }
     
@@ -128,8 +129,8 @@ int main(){
         routes.clear();
         routes.push_back(create_route(graph, "manual_route_1", 20620, 5104, 5));
         cout<<"|___ Created one person to test"<<endl;
-        
-        simulation S=simulation(routes, graph, people);
+        vector<double>emp;
+        simulation S=simulation(routes, graph, people,emp);
         cout<<"|___ ___ ___ "<<S.simulate()<<endl;
     }
     
