@@ -56,7 +56,7 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
     }
 
     int idn = BN.size();
-    int original_n=BN.size();
+    original_n=BN.size();
 
     vector<pair<int,double>>base_beliefs;
     vector<vector<int>>exp_nodes;
@@ -136,7 +136,7 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
             }
             sim_persons.push_back(p);
             
-            event person_walk = {1.5+dis(gen), event_type::PERSON_ARRIVE_STOP, i, p.path_nodes[0]};
+            event person_walk = {0, event_type::PERSON_START_WALKING, i, p.path_nodes[0]};
             event_queue.push(person_walk);
         }
 
@@ -146,7 +146,7 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
                 b.route_id=i;
                 b.id=sim_buses.size();
                 b.stops=exp_nodes[i];
-                b.distances=vector<double>(0.5);
+                b.distances=vector<double>(100);
                 
                 if(rand()%2==0)
                     reverse(b.stops.begin(), b.stops.end());
@@ -156,7 +156,7 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
                     b.visited.insert(b.stops[h]);
                 } 
                     
-                event bus_arrival = {dis(gen), event_type::BUS_ARRIVE_STOP, -(1+b.id),b.stops[b.current_stop]};
+                event bus_arrival = {dis(gen), event_type::BUS_ARRIVE_STOP, b.id,b.stops[b.current_stop]};
                 event_queue.push(bus_arrival);
 
                 sim_buses.push_back(b);
@@ -183,19 +183,47 @@ std::string event_type_to_string(event_type type) {
 }
 
 
-void simulation::handle_person_start_walking(const event& event) {
+void simulation::handle_person_start_walking(const event& curr_event) {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
+
+    sim_person* p=&sim_persons[curr_event.entity_id];
+    double distance_walked=0.0;
+    while(p->current_stop<p->path_nodes.size() && p->path_nodes[p->current_stop]<original_n){
+        distance_walked+=p->move();
+    }
+
+    if(p->current_stop==p->path_nodes.size()){
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5),
+            event_type::PERSON_ARRIVE_WORK,
+            p->id,
+            p->path_nodes.back());
+
+        event_queue.push(arrive);
+    }else{
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
+            event_type::PERSON_ARRIVE_STOP, 
+            p->id,
+            p->path_nodes[p->current_stop]
+        );
+
+        event_queue.push(arrive);    
+    }
 }
 
-void simulation::handle_person_arrive_stop(const event& event) {
+void simulation::handle_person_arrive_stop(const event& curr_event) {
 }
 
-void simulation::handle_bus_arrive_stop(const event& event) {
+void simulation::handle_bus_arrive_stop(const event& curr_event) {
 }
 
-void simulation::handle_person_get_off_bus(const event& event) {
+void simulation::handle_person_get_off_bus(const event& curr_event) {
 }
 
-void simulation::handle_person_arrive_work(const event& event) {
+void simulation::handle_person_arrive_work(const event& curr_event) {
 }
 
 

@@ -24,7 +24,8 @@ struct event {
     event_type type;
     int entity_id;
     int node;
-
+    event(double t, event_type ty, int id, int n)
+        : time(t), type(ty), entity_id(id), node(n) {}
     bool operator<(const event& other) const ;
 };
 
@@ -82,6 +83,8 @@ private:
     vector<sim_person>sim_persons;
     vector<sim_bus>sim_buses;
     priority_queue<event>event_queue;
+    int original_n;
+    
 };
 
 #endif
