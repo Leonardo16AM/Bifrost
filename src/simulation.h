@@ -34,6 +34,7 @@ struct sim_person {
     vector<int>path_nodes;
     vector<double>distances;
     int current_stop=0;
+    int next_stop=0;
 
     double move();
     bool on_work();
@@ -47,7 +48,8 @@ struct sim_bus{
    
     int current_stop=0;
     set<int>visited;
-    map<int,vector<int>>passengers;
+    set<int>passengers;
+    map<int,vector<int>>passengers_stops;
 
     double move();
     vector<int>leave_on_stop();
@@ -75,6 +77,7 @@ public:
     vector<Person> get_people();
     void save_simulation_to_csv(const string &filename) const;
     void load_simulation_from_csv(const string &filename);
+    bool verbose=false;
 private:
     Graph G;
     Graph BG;
@@ -84,7 +87,8 @@ private:
     vector<sim_bus>sim_buses;
     priority_queue<event>event_queue;
     int original_n;
-    
+    map<int,set<int>>on_stop;
+    int persons_finished=0;
 };
 
 #endif
