@@ -2,85 +2,23 @@
 
 using namespace std;
 
-// Estructura para una celda de la cuadrícula
-struct GridCell
+
+vector<pair<double, double>> interpolate(pair<double, double> start_point, pair<double, double> end_point, int num_intermediate_points) 
 {
-    std::vector<Node> nodes; // Nodos en esta celda
-};
-
-class SpatialGrid
-{
-public:
-    SpatialGrid(double gridSize, const Graph &graph) : gridSize(gridSize)
-    {
-        // Llenamos la cuadrícula con los nodos del grafo
-        for (const auto &node : graph.nodes)
-        {
-            double lat = node.lat;
-            double lon = node.lon;
-            auto cell = getCell(lat, lon);
-            grid[cell].nodes.push_back(node);
-        }
+    vector<pair<double, double>> points;
+    points.push_back(start_point); // Agregar el punto inicial
+    
+    double delta_x = (end_point.first - start_point.first) / (num_intermediate_points + 1);
+    double delta_y = (end_point.second - start_point.second) / (num_intermediate_points + 1);
+    
+    for (int i = 1; i <= num_intermediate_points; ++i) {
+        double x = start_point.first + i * delta_x;
+        double y = start_point.second + i * delta_y;
+        points.emplace_back(x, y); // Agregar los puntos intermedios
     }
-
-    // Encuentra el nodo más cercano dado latitud y longitud
-    int nearestNeighbor(double lat, double lon)
-    {
-        auto cell = getCell(lat, lon);
-        double minDist = std::numeric_limits<double>::max();
-        int closestNodeId = -1;
-
-        // Verificamos la celda actual y las celdas vecinas
-        for (int i = -1; i <= 1; ++i)
-        {
-            for (int j = -1; j <= 1; ++j)
-            {
-                auto neighborCell = std::make_pair(cell.first + i, cell.second + j);
-                if (grid.find(neighborCell) != grid.end())
-                {
-                    for (const auto &node : grid[neighborCell].nodes)
-                    {
-                        double nodeLat = node.lat;
-                        double nodeLon = node.lon;
-                        double dist = distance(lat, lon, nodeLat, nodeLon);
-                        if (dist < minDist)
-                        {
-                            minDist = dist;
-                            closestNodeId = node.id;
-                        }
-                    }
-                }
-            }
-        }
-
-        return closestNodeId;
-    }
-
-private:
-    double gridSize;
-    std::map<std::pair<int, int>, GridCell> grid;
-
-    // Función que convierte latitud y longitud a una celda de la cuadrícula
-    std::pair<int, int> getCell(double lat, double lon)
-    {
-        int x = static_cast<int>(lat / gridSize);
-        int y = static_cast<int>(lon / gridSize);
-        return {x, y};
-    }
-
-    // Función para calcular la distancia euclidiana entre dos puntos
-    double distance(double lat1, double lon1, double lat2, double lon2)
-    {
-        return std::sqrt((lat1 - lat2) * (lat1 - lat2) + (lon1 - lon2) * (lon1 - lon2));
-    }
-};
-
-// Función que devuelve el id del nodo más cercano dada la latitud y longitud
-int pointToNode(double lat, double lon, const Graph &graph, bool wtf)
-{
-    // Definimos el tamaño de la cuadrícula (puede ajustarse según las características del grafo)
-    static SpatialGrid spatialGrid(0.01, graph);
-    return spatialGrid.nearestNeighbor(lat, lon);
+    
+    points.push_back(end_point); // Agregar el punto final
+    return points;
 }
 
 // devuelve el id del nodo mas cercano a la latitud y longitud dada
@@ -104,42 +42,32 @@ int pointToNode(double lat, double lon, Graph &graph)
     return node;
 }
 
-// void Optimize(const Graph& graph, const vector<Person>& people) {
-//     // for(int i=0;i<graph.nodes.size();i++){
-//     //     lats.insert({graph.nodes[i].lat, graph.nodes[i].id});
-//     //     lons.insert({graph.nodes[i].lon, graph.nodes[i].id});
-//     // }
-
-//     // // imprimir la mayor y menor latitud y longitud
-//     // cout<<"lats range: "<<lats.begin()->first<<" "<<lats.rbegin()->first<<"\nlon range:"<<lons.begin()->first<<" "<<lons.rbegin()->first<<endl;
-
-//     // cout<<graph.nodes[3].lat<<" "<<graph.nodes[3].lon<<" NODO 3\n";
-//     // int nod = pointToNode(22, -82, graph);
-//     // cout<<"FOUND NODO "<<nod<<" "<<graph.nodes[nod].lat<<" "<<graph.nodes[nod].lon<<"\n";
-
-// }
 
 int NUM_PARTICLES = 30;
 int MAX_ITERATIONS = 100;
+int ROUTE_BREAKPOINTS = 5;
 
 set<pair<double, int>> lats, lons;
-
-// Estructura para representar una partícula
-struct Particle
-{
-    std::vector<std::pair<double, double>> positions;      // Pares de coordenadas de inicio y fin de rutas
-    std::vector<std::pair<double, double>> velocities;     // Velocidades para cada coordenada
-    std::vector<std::pair<double, double>> best_positions; // Mejor posición encontrada por la partícula
-    double best_score;
-};
 
 // Función para generar un número aleatorio entre dos límites
 double random_double(double min, double max)
 {
-    static std::mt19937 rng(std::random_device{}());
-    std::uniform_real_distribution<double> dist(min, max);
+    static mt19937 rng(random_device{}());
+    uniform_real_distribution<double> dist(min, max);
     return dist(rng);
 }
+
+// Estructura para representar una partícula
+struct Particle
+{
+    vector<vector<pair<double, double>>> positions;
+    vector<vector<pair<double, double>>> velocities;
+    vector<vector<pair<double, double>>> best_positions;
+    // vector<pair<double, double>> positions;      // Pares de coordenadas de inicio y fin de rutas
+    // vector<pair<double, double>> velocities;     // Velocidades para cada coordenada
+    // vector<pair<double, double>> best_positions; // Mejor posición encontrada por la partícula
+    double best_score;
+};
 
 // Implementación de la optimización usando PSO
 simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,int max_iterations,int num_particles)
@@ -163,35 +91,38 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
     // Límites del plano (esto puede depender de tu grafo)
     double lat_min = lats.begin()->first, lat_max = lats.rbegin()->first;
     double lon_min = lons.begin()->first, lon_max = lons.rbegin()->first;
+    double delta_lat = lat_max - lat_min;
+    double delta_lon = lon_max - lon_min;
 
     // Inicialización de partículas
-    std::vector<Particle> particles(num_particles);
-    std::vector<std::pair<double, double>> global_best_position; // Ahora es un vector
-    double global_best_score = std::numeric_limits<double>::infinity();
+    vector<Particle> particles(num_particles);
+    vector<vector<pair<double, double>>> global_best_position; // Ahora es un vector
+    double global_best_score = numeric_limits<double>::infinity();
 
     for (auto &particle : particles)
     {
         for (int i = 0; i < number_of_routes; ++i)
         {
             // Generamos posiciones iniciales aleatorias para cada ruta
-            int delta_lat = lat_max - lat_min;
-            int delta_lon = lon_max - lon_min;
 
             double start_lat = random_double(lat_min, lat_max);
             double start_lon = random_double(lon_min, lon_max);
             double end_lat = random_double(lat_min, lat_max);
             double end_lon = random_double(lon_min, lon_max);
 
-            particle.positions.emplace_back(start_lat, start_lon);
-            particle.positions.emplace_back(end_lat, end_lon);
+            // Interpolamos puntos intermedios
+            particle.positions.push_back(interpolate({start_lat, start_lon}, {end_lat, end_lon}, ROUTE_BREAKPOINTS));
 
             // Velocidades iniciales aleatorias
             double v1 = 0.3;
-            particle.velocities.emplace_back(random_double(-v1, v1), random_double(-v1, v1));
-            particle.velocities.emplace_back(random_double(-v1, v1), random_double(-v1, v1));
+            particle.velocities.push_back({});
+            for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+            {
+                particle.velocities[i].push_back({random_double(-v1, v1), random_double(-v1, v1)});
+            }
         }
         particle.best_positions = particle.positions;
-        particle.best_score = std::numeric_limits<double>::infinity();
+        particle.best_score = numeric_limits<double>::infinity();
     }
 
     // Bucle principal de PSO
@@ -204,23 +135,23 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
             cout << "        PARTICLE: " << ++routecount << "/" << num_particles << endl;
             // Crear rutas a partir de las posiciones actuales de la partícula
             // cout << "        DEBUG 1" << endl;
-            std::vector<Route> routes;
+            vector<Route> routes;
             double routes_distance_heuristic = 0;
             for (int i = 0; i < number_of_routes; ++i)
             {
                 // cout << "        DEBUG 1.1 " << particle.positions.size()<< " " << number_of_routes << endl;
-                int start_node = pointToNode(particle.positions[i * 2].first, particle.positions[i * 2].second, graph);
+                int start_node = pointToNode(particle.positions[i][0].first, particle.positions[i][0].second, graph);
                 // cout << "        DEBUG 1.2" << endl;
-                int end_node = pointToNode(particle.positions[i * 2 + 1].first, particle.positions[i * 2 + 1].second, graph);
+                int end_node = pointToNode(particle.positions[i][ROUTE_BREAKPOINTS+1].first, particle.positions[i][ROUTE_BREAKPOINTS].second, graph);
                 // cout << "        DEBUG 1.3 " << start_node << " " << end_node << endl;
-                Route route = create_route(graph, "route_" + std::to_string(i), start_node, end_node, 5);
+                Route route = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
                 // cout << "        DEBUG 1.4" << endl;
-                double dist = sqrt( (pow( (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first), 2) + pow( (particle.positions[i * 2].second - particle.positions[i * 2 + 1].second), 2)) );
+                // double dist = sqrt( (pow( (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first), 2) + pow( (particle.positions[i * 2].second - particle.positions[i * 2 + 1].second), 2)) );
 
                 if (route.nodes.size() > 0)
                 {
                     routes.push_back(route);
-                    routes_distance_heuristic += dist;
+                    // routes_distance_heuristic += dist;
                 }
                 // cout << "        DEBUG 1.5 " << dist << " " << particle.positions[i * 2].first << " " <<particle.positions[i * 2 + 1].first<< " " <<particle.positions[i * 2].second <<" " << particle.positions[i * 2 + 1].second<< " " << endl;
             }
@@ -249,24 +180,29 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
             }
             //  cout << "        DEBUG 3" << endl;
             // Actualizar la velocidad y posición de la partícula
-            for (int i = 0; i < number_of_routes * 2; ++i)
+            for (int i = 0; i < number_of_routes; ++i)
             {
-                particle.velocities[i].first = w * particle.velocities[i].first + c1 * random_double(0, 1) * (particle.best_positions[i].first - particle.positions[i].first) + c2 * random_double(0, 1) * (global_best_position[i].first - particle.positions[i].first);
+                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+                {
+                    // cout << "        DEBUG 3.1" << endl;
+                    // Actualizar velocidad
+                    particle.velocities[i][j].first = w * particle.velocities[i][j].first + c1 * random_double(0, 1) * (particle.best_positions[i][j].first - particle.positions[i][j].first) + c2 * random_double(0, 1) * (global_best_position[i][j].first - particle.positions[i][j].first);
 
-                particle.velocities[i].second = w * particle.velocities[i].second + c1 * random_double(0, 1) * (particle.best_positions[i].second - particle.positions[i].second) + c2 * random_double(0, 1) * (global_best_position[i].second - particle.positions[i].second);
+                    particle.velocities[i][j].second = w * particle.velocities[i][j].second + c1 * random_double(0, 1) * (particle.best_positions[i][j].second - particle.positions[i][j].second) + c2 * random_double(0, 1) * (global_best_position[i][j].second - particle.positions[i][j].second);
 
-                // Actualizar posición
-                particle.positions[i].first += particle.velocities[i].first;
-                if (particle.positions[i].first > lat_max)
-                    particle.positions[i].first = lat_max;
-                if (particle.positions[i].first < lat_min)
-                    particle.positions[i].first = lat_min;
+                    // Actualizar posición
+                    particle.positions[i][j].first += particle.velocities[i][j].first;
+                    if (particle.positions[i][j].first > lat_max)
+                        particle.positions[i][j].first = lat_max;
+                    if (particle.positions[i][j].first < lat_min)
+                        particle.positions[i][j].first = lat_min;
 
-                particle.positions[i].second += particle.velocities[i].second;
-                if (particle.positions[i].second > lon_max)
-                    particle.positions[i].second = lon_max;
-                if (particle.positions[i].second < lon_min)
-                    particle.positions[i].second = lon_min;
+                    particle.positions[i][j].second += particle.velocities[i][j].second;
+                    if (particle.positions[i][j].second > lon_max)
+                        particle.positions[i][j].second = lon_max;
+                    if (particle.positions[i][j].second < lon_min)
+                        particle.positions[i][j].second = lon_min;
+                }
             }
             // cout << "        DEBUG 4" << endl;
         }
@@ -282,14 +218,14 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
     }
 
     // Devolver las mejores rutas encontradas
-    std::vector<Route> best_routes;
-    for (int i = 0; i < number_of_routes; ++i)
-    {
-        int start_node = pointToNode(global_best_position[i * 2].first, global_best_position[i * 2].second, graph);
-        int end_node = pointToNode(global_best_position[i * 2 + 1].first, global_best_position[i * 2 + 1].second, graph);
-        Route route = create_route(graph, "route_" + std::to_string(i), start_node, end_node, 5);
-        best_routes.push_back(route);
-    }
+    // vector<Route> best_routes;
+    // for (int i = 0; i < number_of_routes; ++i)
+    // {
+    //     int start_node = pointToNode(global_best_position[i * 2].first, global_best_position[i * 2].second, graph);
+    //     int end_node = pointToNode(global_best_position[i * 2 + 1].first, global_best_position[i * 2 + 1].second, graph);
+    //     Route route = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
+    //     best_routes.push_back(route);
+    // }
 
     // return best_routes;
     return best_sim;
