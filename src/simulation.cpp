@@ -43,10 +43,10 @@ bool sim_bus::on_direction(int node){
 
 simulation::simulation() {}
 
-simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> &persons_,vector<double>&cost_per_person) : G(G_), buses(buses_), persons(persons_){
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, 1.0);
+simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,vector<double>&cost_per_person, bool event_based) : G(G_), buses(buses_), persons(persons_){
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
 
     vector<Node> BN = G.nodes;
     vector<Edge> BE = G.edges;
@@ -56,7 +56,7 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> &pers
     }
 
     int idn = BN.size();
-    int original_n=BN.size();
+    original_n=BN.size();
 
     vector<pair<int,double>>base_beliefs;
     vector<vector<int>>exp_nodes;
@@ -101,57 +101,197 @@ simulation::simulation(std::vector<Route> buses_, Graph G_, vector<Person> &pers
 
     BG = Graph(BN, BE);
 
+    if(event_based){
+        unordered_set<int>visitable_nodes;
+        for(int i=0;i<=BN.size();i++)visitable_nodes.insert(i);
+        
+        for(int i=0;i<persons.size();i++){
+            if(persons[i].beliefs.size()==0)persons[i].beliefs=base_beliefs;
+            sim_person p;
+            p.id=0;
 
-    unordered_set<int>visitable_nodes;
-    for(int i=0;i<=BN.size();i++)visitable_nodes.insert(i);
-    
-    for(int i=0;i<persons.size();i++){
-        if(persons[i].beliefs.size()==0)persons[i].beliefs=base_beliefs;
-        sim_person p;
-        p.id=0;
+            vector<pair<int,double>> old_beliefs=BG.update_from_beliefs(persons[i].beliefs);
+            auto dijkstra_result = BG.dijkstra(persons[i].home_node_id, visitable_nodes);
+            vector<int> shortest_path = BG.reconstruct_path(persons[i].home_node_id, persons[i].work_node_id, dijkstra_result);
 
-        std::vector<std::pair<int,double>> old_beliefs=BG.update_from_beliefs(persons[i].beliefs);
-        auto dijkstra_result = BG.dijkstra(persons[i].home_node_id, visitable_nodes);
-        vector<int> shortest_path = BG.reconstruct_path(persons[i].home_node_id, persons[i].work_node_id, dijkstra_result);
+            double sp=dijkstra_result[persons[i].work_node_id].second;
+            if (sp == numeric_limits<double>::infinity())
+                    sp = 40.0;
+            cost_per_person.push_back(sp);
 
-        double sp=dijkstra_result[persons[i].work_node_id].second;
-        if (sp == std::numeric_limits<double>::infinity())
-                sp = 40.0;
-        cost_per_person.push_back(sp);
+            p.path_nodes=shortest_path;
 
-        p.path_nodes=shortest_path;
-        for(auto it:shortest_path){
-            if(it>original_n)cout<<"<<< ";
-            cout<<">>> >>>"<<it<<endl;
+            if(p.path_nodes[0]==770){
+                for(auto it:shortest_path){
+                    if(it>original_n)cout<<"<<< ";
+                    cout<<">>> >>>"<<it<<endl;
+                }
+            }
+
+            BG.update_from_beliefs(old_beliefs);    
+            for(auto it:p.path_nodes){
+                if(it>=original_n){
+                    p.distances.push_back(1);
+                }else{
+                    p.distances.push_back(2);
+                }
+            }
+            sim_persons.push_back(p);
+            
+            event person_walk = {0, event_type::PERSON_START_WALKING, i, p.path_nodes[0]};
+            event_queue.push(person_walk);
         }
-        BG.update_from_beliefs(old_beliefs);    
-        // UPDATE p.distances;
-        sim_persons.push_back(p);
-    }
 
-    for(int i=0;i<buses.size();i++){
-        for(int j=0;j<buses[i].bus_count;j++){
-            sim_bus b;
-            b.route_id=i;
-            b.id=sim_buses.size();
-            b.stops=exp_nodes[i];
-            b.distances=vector<double>(0.5);
-            
-            if(std::rand()%2==0)
-                std::reverse(b.stops.begin(), b.stops.end());
-            
-            b.current_stop = std::rand() % b.stops.size();
-            for(int h=0;h<=b.current_stop;h++){
-                b.visited.insert(b.stops[h]);
-            } 
+        for(int i=0;i<buses.size();i++){
+            for(int j=0;j<buses[i].bus_count;j++){
+                sim_bus b;
+                b.route_id=i;
+                b.id=sim_buses.size();
+                b.stops=exp_nodes[i];
+                b.distances=vector<double>(100);
+                
+                if(rand()%2==0)
+                    reverse(b.stops.begin(), b.stops.end());
+                
+                b.current_stop = rand() % b.stops.size();
+                for(int h=0;h<=b.current_stop;h++){
+                    b.visited.insert(b.stops[h]);
+                } 
+                    
+                event bus_arrival = {dis(gen), event_type::BUS_ARRIVE_STOP, b.id,b.stops[b.current_stop]};
+                event_queue.push(bus_arrival);
 
-            sim_buses.push_back(b);
+                sim_buses.push_back(b);
+            }
         }
     }
 }
 
+std::string event_type_to_string(event_type type) {
+    switch (type) {
+        case event_type::PERSON_START_WALKING:
+            return "PERSON_START_WALKING";
+        case event_type::PERSON_ARRIVE_STOP:
+            return "PERSON_ARRIVE_STOP";
+        case event_type::BUS_ARRIVE_STOP:
+            return "BUS_ARRIVE_STOP";
+        case event_type::PERSON_GET_OFF_BUS:
+            return "PERSON_GET_OFF_BUS";
+        case event_type::PERSON_ARRIVE_WORK:
+            return "PERSON_ARRIVE_WORK";
+        default:
+            return "UNKNOWN";
+    }
+}
 
-double simulation::simulate_person(Person &person, std::unordered_set<int> &visitable_nodes){
+
+void simulation::handle_person_start_walking(const event& curr_event) {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
+
+    sim_person* p=&sim_persons[curr_event.entity_id];
+    double distance_walked=0.0;
+    while(p->current_stop<p->path_nodes.size() && p->path_nodes[p->current_stop]<original_n){
+        distance_walked+=p->move();
+    }
+
+    if(p->current_stop==p->path_nodes.size()){
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5),
+            event_type::PERSON_ARRIVE_WORK,
+            p->id,
+            p->path_nodes.back());
+
+        event_queue.push(arrive);
+    }else{
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
+            event_type::PERSON_ARRIVE_STOP, 
+            p->id,
+            p->path_nodes[p->current_stop]
+        );
+
+        event_queue.push(arrive);    
+    }
+}
+
+void simulation::handle_person_arrive_stop(const event& curr_event) {
+}
+
+void simulation::handle_bus_arrive_stop(const event& curr_event) {
+}
+
+void simulation::handle_person_get_off_bus(const event& curr_event) {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
+
+    sim_person* p=&sim_persons[curr_event.entity_id];
+    double distance_walked=0.0;
+    while(p->current_stop<p->path_nodes.size() && p->path_nodes[p->current_stop]<original_n){
+        distance_walked+=p->move();
+    }
+
+    if(p->current_stop==p->path_nodes.size()){
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5),
+            event_type::PERSON_ARRIVE_WORK,
+            p->id,
+            p->path_nodes.back());
+
+        event_queue.push(arrive);
+    }else{
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
+            event_type::PERSON_ARRIVE_STOP, 
+            p->id,
+            p->path_nodes[p->current_stop]
+        );
+
+        event_queue.push(arrive);    
+    }
+}
+
+void simulation::handle_person_arrive_work(const event& curr_event) {
+}
+
+
+
+double simulation::events_simulate(int days){
+    random_device rd;
+    mt19937 gen(rd()); 
+    uniform_real_distribution<> dis(0.0, 1.0);
+
+    while(!event_queue.empty()){
+        event curr=event_queue.top();
+        event_queue.pop();
+
+        cout<<">>> "<<event_type_to_string(curr.type)<<" "<<curr.entity_id<<" "<<curr.node<<endl;
+        
+        switch(curr.type) {
+            case event_type::PERSON_START_WALKING:
+                handle_person_start_walking(curr);
+                break;
+            case event_type::PERSON_ARRIVE_STOP:
+                handle_person_arrive_stop(curr);
+                break;
+            case event_type::BUS_ARRIVE_STOP:
+                handle_bus_arrive_stop(curr);
+                break;
+            case event_type::PERSON_GET_OFF_BUS:
+                handle_person_get_off_bus(curr);
+                break;
+            case event_type::PERSON_ARRIVE_WORK:
+                handle_person_arrive_work(curr);
+                break;
+        }
+    }
+    return -1;
+}
+
+
+double simulation::simulate_person(Person &person, unordered_set<int> &visitable_nodes){
     fl::Engine* engine = FuzzyEngineSingleton::getInstance();
 
     double walking_distance = person.dwalk[person.work_node_id].second; 
@@ -163,7 +303,7 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
     engine->getInputVariable("PhysicalState")->setValue(person.phisical_state);
     engine->getInputVariable("Money")->setValue(person.money);
 
-    std::string status;
+    string status;
     if (!engine->isReady(&status)) {
         throw fl::Exception("Engine not ready. The following errors were encountered:\n" + status, FL_AT);
     }
@@ -173,14 +313,14 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
 
     if (decision_value < 0.5){
         double sp = person.dwalk[person.work_node_id].second;
-        if(sp == std::numeric_limits<double>::infinity()) sp = 40.0;
+        if(sp == numeric_limits<double>::infinity()) sp = 40.0;
         return sp / person.speed;
     } else {
-        std::vector<std::pair<int,double>> old_beliefs=BG.update_from_beliefs(person.beliefs);
+        vector<pair<int,double>> old_beliefs=BG.update_from_beliefs(person.beliefs);
 
-        std::unordered_map<int, std::pair<int, double>> um = BG.dijkstra(person.home_node_id, visitable_nodes);
+        unordered_map<int, pair<int, double>> um = BG.dijkstra(person.home_node_id, visitable_nodes);
         double sp = um[person.work_node_id].second;
-        if (sp == std::numeric_limits<double>::infinity())
+        if (sp == numeric_limits<double>::infinity())
             sp = 40.0;
 
         BG.update_from_beliefs(old_beliefs);    
@@ -188,7 +328,7 @@ double simulation::simulate_person(Person &person, std::unordered_set<int> &visi
     }
 }
 
-vector<double> simulation::simulate_persons(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes){
+vector<double> simulation::simulate_persons(vector<Person> &subset_pers, unordered_set<int> &visitable_nodes){
     vector<double>vals;
     for(auto& pers:subset_pers){
         vals.push_back(simulate_person(pers,visitable_nodes));
@@ -212,7 +352,7 @@ double simulation::average(vector<double> &vals){
     return (double)(dl + dr) / 2.0;
 }
 
-double simulation::CVaR90(std::vector<Person> &subset_pers, std::unordered_set<int> &visitable_nodes){
+double simulation::CVaR90(vector<Person> &subset_pers, unordered_set<int> &visitable_nodes){
     vector<double>vals=simulate_persons(subset_pers,visitable_nodes);
     sort(vals.begin(),vals.end());
     reverse(vals.begin(),vals.end());
@@ -221,7 +361,7 @@ double simulation::CVaR90(std::vector<Person> &subset_pers, std::unordered_set<i
         return 0.0;
     }
     double pos = 0.9 * static_cast<double>(vals.size());
-    size_t index = static_cast<size_t>(std::ceil(pos)) - 1; 
+    size_t index = static_cast<size_t>(ceil(pos)) - 1; 
     
     if(index >= vals.size()){
         index = vals.size() - 1;
@@ -250,7 +390,7 @@ double simulation::simulate(int days){
     unsigned long long sum = 0;
     int num_trips = 0;
 
-    std::unordered_set<int> visitable_nodes;
+    unordered_set<int> visitable_nodes;
     for (int i = 0; i <= BG.nodes.size(); i++){
         visitable_nodes.insert(i);
     }
@@ -258,18 +398,18 @@ double simulation::simulate(int days){
     return CVaR90(persons, visitable_nodes);
 }
 
-std::vector<Route> simulation::get_routes(){
+vector<Route> simulation::get_routes(){
     return buses;
 }
 
-std::vector<Person> simulation::get_people(){
+vector<Person> simulation::get_people(){
     return persons;
 }
 
-void simulation::save_simulation_to_csv(const std::string &filename) const{
-    std::ofstream file(filename);
+void simulation::save_simulation_to_csv(const string &filename) const{
+    ofstream file(filename);
     if (!file.is_open()){
-        std::cerr << "Error: Unable to open file " << filename << " for saving.\n";
+        cerr << "Error: Unable to open file " << filename << " for saving.\n";
         return;
     }
 
@@ -308,48 +448,48 @@ void simulation::save_simulation_to_csv(const std::string &filename) const{
     }
 
     file.close();
-    std::cout << "Simulation data saved to " << filename << ".\n";
+    cout << "Simulation data saved to " << filename << ".\n";
 }
 
-void simulation::load_simulation_from_csv(const std::string &filename){
-    std::ifstream file(filename);
+void simulation::load_simulation_from_csv(const string &filename){
+    ifstream file(filename);
     if (!file.is_open()){
-        std::cerr << "Error: Unable to open file " << filename << " for loading.\n";
+        cerr << "Error: Unable to open file " << filename << " for loading.\n";
         return;
     }
 
-    std::string line, token;
+    string line, token;
 
     // Cargar las rutas
     buses.clear();
-    std::getline(file, line); // Ignorar encabezado
-    while (std::getline(file, line)){
+    getline(file, line); // Ignorar encabezado
+    while (getline(file, line)){
         if (line == "HomeNodeID,WorkNodeID,PhisicalState,Patience,Money,Speed")
             break; // Llegamos a la sección de personas
-        std::istringstream ss(line);
+        istringstream ss(line);
         Route route;
-        std::getline(ss, route.id, ',');
-        std::getline(ss, token, ',');
-        route.bus_count = std::stoi(token);
-        std::getline(ss, token, ',');
-        route.total_distance = std::stod(token);
-        std::getline(ss, token, ',');
-        route.color = sf::Color(std::stoul(token));
+        getline(ss, route.id, ',');
+        getline(ss, token, ',');
+        route.bus_count = stoi(token);
+        getline(ss, token, ',');
+        route.total_distance = stod(token);
+        getline(ss, token, ',');
+        route.color = sf::Color(stoul(token));
 
         // Cargar las paradas
-        std::getline(ss, token, ',');
-        std::istringstream stops_ss(token);
-        std::string stop;
-        while (std::getline(stops_ss, stop, ';')){
-            route.stops.push_back(std::stoi(stop));
+        getline(ss, token, ',');
+        istringstream stops_ss(token);
+        string stop;
+        while (getline(stops_ss, stop, ';')){
+            route.stops.push_back(stoi(stop));
         }
 
         // Cargar los nodos
-        std::getline(ss, token, ',');
-        std::istringstream nodes_ss(token);
-        std::string node;
-        while (std::getline(nodes_ss, node, ';')){
-            route.nodes.push_back(std::stoi(node));
+        getline(ss, token, ',');
+        istringstream nodes_ss(token);
+        string node;
+        while (getline(nodes_ss, node, ';')){
+            route.nodes.push_back(stoi(node));
         }
 
         buses.push_back(route);
@@ -357,25 +497,25 @@ void simulation::load_simulation_from_csv(const std::string &filename){
 
     // Cargar las personas
     persons.clear();
-    while (std::getline(file, line)){
-        std::istringstream ss(line);
+    while (getline(file, line)){
+        istringstream ss(line);
         Person person;
-        std::getline(ss, token, ',');
-        person.home_node_id = std::stoi(token);
-        std::getline(ss, token, ',');
-        person.work_node_id = std::stoi(token);
-        std::getline(ss, token, ',');
-        person.phisical_state = std::stod(token);
-        std::getline(ss, token, ',');
-        person.patience = std::stod(token);
-        std::getline(ss, token, ',');
-        person.money = std::stod(token);
-        std::getline(ss, token, ',');
-        person.speed = std::stod(token);
+        getline(ss, token, ',');
+        person.home_node_id = stoi(token);
+        getline(ss, token, ',');
+        person.work_node_id = stoi(token);
+        getline(ss, token, ',');
+        person.phisical_state = stod(token);
+        getline(ss, token, ',');
+        person.patience = stod(token);
+        getline(ss, token, ',');
+        person.money = stod(token);
+        getline(ss, token, ',');
+        person.speed = stod(token);
 
         persons.push_back(person);
     }
 
     file.close();
-    std::cout << "Simulation data loaded from " << filename << ".\n";
+    cout << "Simulation data loaded from " << filename << ".\n";
 }
