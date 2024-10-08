@@ -22,22 +22,23 @@ double sim_bus::move(){
         reverse(distances.begin(),distances.end());
         visited.clear();
         visited.insert(stops[0]);
+        visited.insert(stops[1]);
         current_stop=1;
         return distances[0];
     }
-    visited.insert(stops[current_stop]);
     current_stop++;
+    visited.insert(stops[current_stop]);
     return distances[current_stop-1];
 }
 
 vector<int> sim_bus::leave_on_stop(){
-    vector<int>ret= passengers[stops[current_stop]];
-    passengers[stops[current_stop]].clear();
+    vector<int>ret= passengers_stops[stops[current_stop]];
+    passengers_stops[stops[current_stop]].clear();
     return ret;
 }
 
 bool sim_bus::on_direction(int node){
-    return visited.find(node)!=visited.end();
+    return visited.find(node)==visited.end();
 }
 
 
@@ -122,6 +123,7 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
             p.path_nodes=shortest_path;
 
             if(p.path_nodes[0]==770){
+                cout<<">>> ROUTE FOR PERSON "<<i<<endl;
                 for(auto it:shortest_path){
                     if(it>original_n)cout<<"<<< ";
                     cout<<">>> >>>"<<it<<endl;
@@ -131,9 +133,9 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
             BG.update_from_beliefs(old_beliefs);    
             for(auto it:p.path_nodes){
                 if(it>=original_n){
-                    p.distances.push_back(1);
+                    p.distances.push_back(0);
                 }else{
-                    p.distances.push_back(2);
+                    p.distances.push_back(100);
                 }
             }
             sim_persons.push_back(p);
@@ -148,7 +150,7 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
                 b.route_id=i;
                 b.id=sim_buses.size();
                 b.stops=exp_nodes[i];
-                b.distances=vector<double>(100);
+                b.distances=vector<double>(b.stops.size(),(double)1.0+dis(gen)-0.5);
                 
                 if(rand()%2==0)
                     reverse(b.stops.begin(), b.stops.end());
@@ -196,9 +198,17 @@ void simulation::handle_person_start_walking(const event& curr_event) {
         distance_walked+=p->move();
     }
 
+    p->next_stop=p->current_stop;
+    while( p->path_nodes[p->next_stop] >=original_n){
+        p->next_stop++;
+    }
+    int new_curr=p->next_stop;
+    p->next_stop--;
+    p->next_stop=p->path_nodes[p->next_stop];
+
     if(p->current_stop==p->path_nodes.size()){
         event arrive(
-            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5),
+            curr_event.time+distance_walked/persons[curr_event.entity_id].speed+(dis(gen)-0.5),
             event_type::PERSON_ARRIVE_WORK,
             p->id,
             p->path_nodes.back());
@@ -206,21 +216,53 @@ void simulation::handle_person_start_walking(const event& curr_event) {
         event_queue.push(arrive);
     }else{
         event arrive(
-            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
+            curr_event.time+distance_walked/persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
             event_type::PERSON_ARRIVE_STOP, 
             p->id,
             p->path_nodes[p->current_stop]
         );
-
         event_queue.push(arrive);    
     }
+    p->current_stop=new_curr;
 }
 
 void simulation::handle_person_arrive_stop(const event& curr_event) {
+    on_stop[curr_event.node].insert(curr_event.entity_id);
 }
 
 void simulation::handle_bus_arrive_stop(const event& curr_event) {
-}
+    //Persons board
+    for(auto it:on_stop[curr_event.node]){
+        if(sim_buses[curr_event.entity_id].on_direction(sim_persons[it].next_stop)){
+            if(verbose)cout<<">>> PERSON "<<it<<" BOARDS THE BUS"<<endl;
+            sim_buses[curr_event.entity_id].passengers.insert(it);
+            sim_buses[curr_event.entity_id].passengers_stops[sim_persons[it].next_stop].push_back(it);
+        }
+    }
+
+    //Persons leave
+    for(auto p:sim_buses[curr_event.entity_id].passengers_stops[curr_event.node]){
+            if(verbose)cout<<">>> PERSON LEAVES THE BUS"<<endl;
+            event arrive(
+            curr_event.time,
+            event_type::PERSON_GET_OFF_BUS,
+            p,
+            sim_persons[p].path_nodes[sim_persons[p].current_stop]);
+
+        event_queue.push(arrive);
+    }
+    sim_buses[curr_event.entity_id].passengers_stops[curr_event.node].clear();
+
+    //Goto next stop
+    event drive(
+        curr_event.time+sim_buses[curr_event.entity_id].move(),
+        event_type::BUS_ARRIVE_STOP,
+        curr_event.entity_id,
+        sim_buses[curr_event.entity_id].stops[sim_buses[curr_event.entity_id].current_stop]
+        );
+    event_queue.push(drive);
+
+}   
 
 void simulation::handle_person_get_off_bus(const event& curr_event) {
     random_device rd;
@@ -233,9 +275,18 @@ void simulation::handle_person_get_off_bus(const event& curr_event) {
         distance_walked+=p->move();
     }
 
+    
+    p->next_stop=p->current_stop;
+    while( p->path_nodes[p->next_stop] >=original_n){
+        p->next_stop++;
+    }
+    int new_curr=p->next_stop;
+    p->next_stop--;
+    p->next_stop=p->path_nodes[p->next_stop];
+
     if(p->current_stop==p->path_nodes.size()){
         event arrive(
-            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5),
+            curr_event.time+distance_walked/persons[curr_event.entity_id].speed+(dis(gen)-0.5),
             event_type::PERSON_ARRIVE_WORK,
             p->id,
             p->path_nodes.back());
@@ -243,7 +294,7 @@ void simulation::handle_person_get_off_bus(const event& curr_event) {
         event_queue.push(arrive);
     }else{
         event arrive(
-            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
+            curr_event.time+distance_walked/persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
             event_type::PERSON_ARRIVE_STOP, 
             p->id,
             p->path_nodes[p->current_stop]
@@ -251,9 +302,11 @@ void simulation::handle_person_get_off_bus(const event& curr_event) {
 
         event_queue.push(arrive);    
     }
+    p->current_stop=new_curr;
 }
 
 void simulation::handle_person_arrive_work(const event& curr_event) {
+    persons_finished++;
 }
 
 
@@ -263,10 +316,13 @@ double simulation::events_simulate(int days){
     mt19937 gen(rd()); 
     uniform_real_distribution<> dis(0.0, 1.0);
 
-    while(!event_queue.empty()){
+    int cnt=0;
+    while( !event_queue.empty() && persons_finished!=sim_persons.size() ){
         event curr=event_queue.top();
         event_queue.pop();
-
+        
+        cnt++;
+        if(cnt==100)break;
         cout<<">>> "<<event_type_to_string(curr.type)<<" "<<curr.entity_id<<" "<<curr.node<<endl;
         
         switch(curr.type) {
