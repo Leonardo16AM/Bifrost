@@ -121,9 +121,11 @@ simulation::simulation(vector<Route> buses_, Graph G_, vector<Person> &persons_,
 
             p.path_nodes=shortest_path;
 
-            for(auto it:shortest_path){
-                if(it>original_n)cout<<"<<< ";
-                cout<<">>> >>>"<<it<<endl;
+            if(p.path_nodes[0]==770){
+                for(auto it:shortest_path){
+                    if(it>original_n)cout<<"<<< ";
+                    cout<<">>> >>>"<<it<<endl;
+                }
             }
 
             BG.update_from_beliefs(old_beliefs);    
@@ -221,6 +223,34 @@ void simulation::handle_bus_arrive_stop(const event& curr_event) {
 }
 
 void simulation::handle_person_get_off_bus(const event& curr_event) {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
+
+    sim_person* p=&sim_persons[curr_event.entity_id];
+    double distance_walked=0.0;
+    while(p->current_stop<p->path_nodes.size() && p->path_nodes[p->current_stop]<original_n){
+        distance_walked+=p->move();
+    }
+
+    if(p->current_stop==p->path_nodes.size()){
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5),
+            event_type::PERSON_ARRIVE_WORK,
+            p->id,
+            p->path_nodes.back());
+
+        event_queue.push(arrive);
+    }else{
+        event arrive(
+            distance_walked*persons[curr_event.entity_id].speed+(dis(gen)-0.5) ,
+            event_type::PERSON_ARRIVE_STOP, 
+            p->id,
+            p->path_nodes[p->current_stop]
+        );
+
+        event_queue.push(arrive);    
+    }
 }
 
 void simulation::handle_person_arrive_work(const event& curr_event) {
