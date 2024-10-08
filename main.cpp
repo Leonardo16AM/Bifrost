@@ -33,8 +33,8 @@ int main(){
     string archivo = "nombre.csv";
     int personas = 65;      //CHANGE DEFAULT
     int rutas = 100;        //CHANGE DEFAULT
-    int iteraciones = 1;    //CHANGE DEFAULT
-    int particulas = 1;    //CHANGE DEFAULT
+    int iteraciones = 10;    //CHANGE DEFAULT
+    int particulas = 5;    //CHANGE DEFAULT
 
     try
     {
@@ -122,20 +122,19 @@ int main(){
     
     
     {//---------------------------NEW SIMULATION TEST--------------------------------
-        people.clear();
-        generate_people(people, graph, 1);
-        people[0].home_node_id=770;
-        people[0].work_node_id=21208;
-        routes.clear();
-        routes.push_back(create_route(graph, "manual_route_1", 20620, 5104, 1));
-        cout<<"|___ Created one person to test"<<endl;
-        vector<double>emp;
-        simulation S=simulation(routes, graph, people,emp,true);
-        S.verbose=true;
-        cout<<"|___ ___ ___ "<<S.simulate()<<endl;
-        double s=S.events_simulate();
-        cout<<"|___ ___ ___ "<<s<<endl;
-    
+        // people.clear();
+        // generate_people(people, graph, 1);
+        // people[0].home_node_id=770;
+        // people[0].work_node_id=21208;
+        // routes.clear();
+        // routes.push_back(create_route(graph, "manual_route_1", 20620, 5104, 1));
+        // cout<<"|___ Created one person to test"<<endl;
+        // vector<double>emp;
+        // simulation S=simulation(routes, graph, people,emp,true);
+        // S.verbose=true;
+        // // cout<<"|___ ___ ___ "<<S.simulate()<<endl;
+        // double s=S.events_simulate();
+        // cout<<"|___ ___ ___ "<<s<<endl;
     }
     
     /*-------------------------- VISUALIZER STUF --------------------------------------------------*/
