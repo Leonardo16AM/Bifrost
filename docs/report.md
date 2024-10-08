@@ -50,31 +50,48 @@ The problem involves optimizing public transportation in a city represented as a
      - If **Money** is 'High', then **Decision** is 'Bus'.
 
      These fuzzy rules, defined in the fuzzy logic engine, help agents make decisions based on their attributes and beliefs about the environment. For example, if an agent perceives the distance to be far and their physical state to be weak, they are more likely to choose taking a bus. Conversely, if they perceive a long bus delay, they may opt to walk.
-     
-![Fuzzy](Pictures/fuzzy.png)  
+
+     ![Fuzzy](Pictures/fuzzy.png)  
+
+
 
 
 **Optimization**
 
 1. **Simulation**
 
-   The simulation involves agents navigating the transportation network based on their beliefs, desires, and intentions. Travel times are recorded for each journey, and a distribution of these times is used to evaluate overall efficiency.
+   The simulation takes place over several days (usually 7). At the start of the simulation, agents have beliefs about the waiting times for each bus and the time buses take between stops—very basic and general knowledge. Each day, the agents move around the city, and at the end of the day, based on their experience with the buses they took, they update their beliefs with what they learned.
 
-2. **Error Metric**
+   The movement of agents through the city is an event-based simulation, where there are two basic entities: the people and the buses. The buses follow given routes and move in cycles through their respective stops. The people, on the other hand, decide where they want to go and, based on their beliefs, plan the best route and take it. They board the bus when it arrives and get off when they reach their destination stop. A person may take more than one bus if necessary. This simulation involves the following events defined in the code:
+
+   - **PERSON\_START\_WALKING**: An agent starts walking towards a bus stop or destination.
+   - **PERSON\_ARRIVE\_STOP**: An agent arrives at a bus stop and waits for a bus.
+   - **BUS\_ARRIVE\_STOP**: A bus arrives at a stop, allowing agents to board or disembark.
+   - **PERSON\_GET\_OFF\_BUS**: An agent gets off a bus at their desired stop.
+   - **PERSON\_ARRIVE\_WORK**: An agent reaches their final destination, such as work or another point of interest.
+
+   At the end of each day, the agents record the bus delay times and the times between stops and average them with the previously known times, except for the first day, where they simply keep the newly gained knowledge (as if they had never taken that bus before).
+
+  
+
+1. **Error Metric**
 
    The primary metric used for optimization is CVaR90, which measures the Conditional Value at Risk at the 90th percentile. Specifically, it represents the average of the worst 10% of travel times. This metric was chosen because it not only considers average performance but also focuses on the tail end of the distribution, ensuring that the most problematic travel scenarios are addressed. By minimizing CVaR90, we aim to provide a more reliable transportation system that performs well even in the worst-case situations, improving both efficiency and user satisfaction.
 
-3. **PSO**
+2. **PSO**
 
    Particle Swarm Optimization (PSO) is an optimization algorithm inspired by the social behavior of birds flocking or fish schooling. In our project, PSO is used to optimize the bus routes to minimize the CVaR90 metric of travel times. PSO works by initializing a swarm of particles, where each particle represents a potential solution (i.e., a set of routes). These particles move through the solution space, adjusting their positions based on their own experience and the experience of neighboring particles to find the optimal solution.
 
    For each route in our simulation, we used 5 intermediate points to optimize the path, with the remaining stops being positioned along the shortest path between these intermediate points. This approach allows us to maintain flexibility in route design while avoiding overly simplistic solutions. In earlier experiments, we used only two intermediate points, which resulted in less effective optimization. In real-world settings, bus routes often do not follow the shortest path between two points, as they need to service multiple stops to meet demand. By using more intermediate points, we allow routes to diverge from the shortest path where necessary, leading to a more realistic and efficient public transportation system.
 
-   Additionally, only modifying the endpoints or corners of a route often has limited impact on the overall performance of the network. By optimizing intermediate points, we can achieve a more nuanced adjustment of the routes, leading to greater improvements in travel time and service reliability.
+**Experiments**
 
+
+   ![Fuzzy](Pictures/training.png)  
 **Further Work**
 
 Future improvements to Bifrost include:
+
 - Exploring other optimization algorithms beyond PSO.
 - Adding schedules to bus routes.
 - Optimizing the project to simulate a greater number of agents, potentially using parallelization with GPUs.
@@ -84,10 +101,7 @@ Future improvements to Bifrost include:
 
 **Conclusions**
 
-Bifrost demonstrates a novel approach to optimizing public transportation through agent-based simulation and Particle Swarm Optimization (PSO). By focusing on minimizing CVaR90, the model addresses not only the average travel times but also the worst-case scenarios, ensuring that the transportation system is both efficient and reliable. This approach makes it possible to create a balanced network that serves the needs of different users effectively, particularly those affected by delays and less optimal conditions.
+Bifrost demonstrates a novel approach to optimizing public transportation through agent-based simulation and Particle Swarm Optimization (PSO). By focusing on minimizing CVaR90, the model addresses not only the average travel times but also the worst-case scenarios, ensuring that the transportation system is both efficient and reliable. This approach makes it possible to create a balanced network that serves the needs of different users effectively, particularly those affected by delays and less optimal conditions. Moreover, this project could have significant applications in real-world traffic optimization, offering insights into how public transit systems can be made more efficient and reliable, ultimately improving urban mobility and reducing congestion.
 
-The use of the BDI architecture allows agents to make realistic decisions based on their beliefs, desires, and intentions, leading to a more human-like simulation of travel behavior. This provides insights into how individual preferences and public transport reliability interact, enabling better understanding and planning of transit routes. The fuzzy logic employed in decision-making also contributes to handling the inherent uncertainties present in urban transport, ensuring that agents respond dynamically to changing conditions.
 
-Moreover, the integration of PSO for route optimization offers an adaptable and powerful tool for managing complex transportation networks. By allowing for the optimization of intermediate points within routes, the model achieves a level of flexibility that makes it applicable to real-world scenarios where bus routes are rarely straightforward or direct. The results show that considering more intermediate points leads to a more nuanced and realistic optimization, which can significantly improve both the efficiency of the routes and user satisfaction.
 
-Future advancements in Bifrost could further enhance its capability by incorporating additional metrics, such as environmental impacts and user comfort. By exploring alternative optimization algorithms, adding scheduling elements, and scaling the simulation to support a larger number of agents, Bifrost could evolve into a comprehensive tool for urban transit planning. Ultimately, Bifrost offers a solid foundation for creating a more efficient, reliable, and user-centered public transportation system that can adapt to the complexities of urban environments.
