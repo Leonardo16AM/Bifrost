@@ -143,8 +143,15 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
                 int start_node = pointToNode(particle.positions[i][0].first, particle.positions[i][0].second, graph);
                 // cout << "        DEBUG 1.2" << endl;
                 int end_node = pointToNode(particle.positions[i][ROUTE_BREAKPOINTS+1].first, particle.positions[i][ROUTE_BREAKPOINTS].second, graph);
+                
+                vector<int> stops;
+                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+                {
+                    stops.push_back(pointToNode(particle.positions[i][j].first, particle.positions[i][j].second, graph));
+                }
+
                 // cout << "        DEBUG 1.3 " << start_node << " " << end_node << endl;
-                Route route = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
+                Route route(graph, "route_"+to_string(i), stops, 5); //  = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
                 // cout << "        DEBUG 1.4" << endl;
                 // double dist = sqrt( (pow( (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first), 2) + pow( (particle.positions[i * 2].second - particle.positions[i * 2 + 1].second), 2)) );
 
