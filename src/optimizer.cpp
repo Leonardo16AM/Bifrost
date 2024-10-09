@@ -237,3 +237,143 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
     // return best_routes;
     return best_sim;
 }
+
+
+
+struct individual
+{
+    vector<vector<pair<double, double>>> positions;
+    double score;
+};
+
+// Optimizacion con Algoritmo genético
+simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_routes, int max_iterations, int num_initial_population)
+{
+    // int population = people.size();
+    simulation best_sim;
+
+    // Parámetros Algoritmo Genético
+    double mutation_rate = 0.1;
+    double crossover_rate = 0.5;
+
+    // ordenar las latitudes y longitudes
+    for (int i = 0; i < graph.nodes.size(); i++)
+    {
+        lats.insert({graph.nodes[i].lat, graph.nodes[i].id});
+        lons.insert({graph.nodes[i].lon, graph.nodes[i].id});
+    }
+    // imprimir la mayor y menor latitud y longitud
+    // cout << "lats range from " << lats.begin()->first << " to " << lats.rbegin()->first << "\nlons range from " << lons.begin()->first << " to " << lons.rbegin()->first << endl;
+
+    // Límites del plano (esto puede depender de tu grafo)
+    double lat_min = lats.begin()->first, lat_max = lats.rbegin()->first;
+    double lon_min = lons.begin()->first, lon_max = lons.rbegin()->first;
+    double delta_lat = lat_max - lat_min;
+    double delta_lon = lon_max - lon_min;
+
+    // Inicialización de la población
+    vector<individual> population(num_initial_population);
+    vector<vector<pair<double, double>>> global_best_position; // Ahora es un vector
+    double global_best_score = numeric_limits<double>::infinity();
+
+    for (auto &ind : population)
+    {
+        for (int i = 0; i < number_of_routes; ++i)
+        {
+            // Generamos posiciones iniciales aleatorias para cada ruta
+
+            double start_lat = random_double(lat_min, lat_max);
+            double start_lon = random_double(lon_min, lon_max);
+            double end_lat = random_double(lat_min, lat_max);
+            double end_lon = random_double(lon_min, lon_max);
+
+            // Interpolamos puntos intermedios
+            ind.positions.push_back(interpolate({start_lat, start_lon}, {end_lat, end_lon}, ROUTE_BREAKPOINTS));
+        }
+    }
+
+    // Bucle principal de Algoritmo Genético
+    for (int iteration = 1; iteration <= max_iterations; ++iteration)
+    {
+        cout << "    EVO ITER: " << iteration << "/" << max_iterations << endl;
+        int routecount = 0;
+        for (auto &ind : population)
+        {
+            cout << "        INDIVIDUAL: " << ++routecount << "/" << num_initial_population << endl;
+            // Crear rutas a partir de las posiciones actuales del individuo
+            vector<Route> routes;
+            double routes_distance_heuristic = 0;
+            for (int i = 0; i < number_of_routes; ++i)
+            {
+                int start_node = pointToNode(ind.positions[i][0].first, ind.positions[i][0].second, graph);
+                int end_node = pointToNode(ind.positions[i][ROUTE_BREAKPOINTS+1].first, ind.positions[i][ROUTE_BREAKPOINTS].second, graph);
+                
+                vector<int> stops;
+                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+                {
+                    stops.push_back(pointToNode(ind.positions[i][j].first, ind.positions[i][j].second, graph));
+                }
+
+                Route route(graph, "route_"+to_string(i), stops, 5); //  = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
+
+                if (route.nodes.size() > 0)
+                {
+                    routes.push_back(route);
+                    // routes_distance_heuristic += dist;
+                }
+            }
+            if (routes.size() == number_of_routes)
+            {
+                // Ejecutar simulación con las rutas generadas
+                vector<double>emp;
+                simulation S(routes, graph, people, emp);
+                double score = S.simulate() + routes_distance_heuristic*50;
+
+                // Actualizar el mejor valor local del individuo
+                ind.score = score;
+
+                // Actualizar el mejor valor global
+                if (score < global_best_score)
+                {
+                    global_best_score = score;
+                    global_best_position = ind.positions; // Ahora asignamos todas las posiciones
+                    best_sim = S;
+                }
+            }
+
+            // Actualizar la velocidad y posición de la partícula
+            for (int i = 0; i < number_of_routes; ++i)
+            {
+                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+                {
+                    // Actualizar posición
+                    ind.positions[i][j].first += random_double(-mutation_rate, mutation_rate);
+                    if (ind.positions[i][j].first > lat_max)
+                        ind.positions[i][j].first = lat_max;
+                    if (ind.positions[i][j].first < lat_min)
+                        ind.positions[i][j].first = lat_min;
+
+                    ind.positions[i][j].second += random_double(-mutation_rate, mutation_rate);
+                    if (ind.positions[i][j].second > lon_max)
+                        ind.positions[i][j].second = lon_max;
+                    if (ind.positions[i][j].second < lon_min)
+                        ind.positions[i][j].second = lon_min;
+                }
+            }
+        }
+
+        // imprimir el mejor resultado hasta ahora
+        cout << "GLOBAL BEST: " << global_best_score << endl;
+
+        if (iteration % 5 == 0)
+        {
+            cout << "SAVING SIMULATION\n";
+            best_sim.save_simulation_to_csv("best_simulation.csv");
+        }
+    }
+
+    return best_sim;
+}
+
+
+
