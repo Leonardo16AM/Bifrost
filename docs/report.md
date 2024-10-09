@@ -86,10 +86,10 @@ The problem involves optimizing public transportation in a city represented as a
 
 **Experiments**
 
-
    ![Fuzzy](Pictures/training.png)  
-**Further Work**
 
+
+**Further Work**
 Future improvements to Bifrost include:
 
 - Exploring other optimization algorithms beyond PSO.
