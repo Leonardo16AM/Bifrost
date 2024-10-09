@@ -2,21 +2,21 @@
 
 using namespace std;
 
-
-vector<pair<double, double>> interpolate(pair<double, double> start_point, pair<double, double> end_point, int num_intermediate_points) 
+vector<pair<double, double>> interpolate(pair<double, double> start_point, pair<double, double> end_point, int num_intermediate_points)
 {
     vector<pair<double, double>> points;
     points.push_back(start_point); // Agregar el punto inicial
-    
+
     double delta_x = (end_point.first - start_point.first) / (num_intermediate_points + 1);
     double delta_y = (end_point.second - start_point.second) / (num_intermediate_points + 1);
-    
-    for (int i = 1; i <= num_intermediate_points; ++i) {
+
+    for (int i = 1; i <= num_intermediate_points; ++i)
+    {
         double x = start_point.first + i * delta_x;
         double y = start_point.second + i * delta_y;
         points.emplace_back(x, y); // Agregar los puntos intermedios
     }
-    
+
     points.push_back(end_point); // Agregar el punto final
     return points;
 }
@@ -42,12 +42,15 @@ int pointToNode(double lat, double lon, Graph &graph)
     return node;
 }
 
-
 int NUM_PARTICLES = 30;
 int MAX_ITERATIONS = 100;
-int ROUTE_BREAKPOINTS = 5;
+int ROUTE_BREAKPOINTS = 0;
 
 set<pair<double, int>> lats, lons;
+double lat_min, lat_max;
+double lon_min, lon_max;
+double delta_lat;
+double delta_lon;
 
 // Función para generar un número aleatorio entre dos límites
 double random_double(double min, double max)
@@ -70,14 +73,14 @@ struct Particle
 };
 
 // Implementación de la optimización usando PSO
-simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,int max_iterations,int num_particles)
+simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes, int max_iterations, int num_particles)
 {
     int population = people.size();
     simulation best_sim;
 
     // Parámetros PSO
-    double c1 = 1.5, c2 = 2;             // Coeficientes de aceleración: cognitivo y social
-    double w = 0.9;                      // Factor de inercia
+    double c1 = 2.5, c2 = 3; // Coeficientes de aceleración: cognitivo y social
+    double w = 0.95;          // Factor de inercia
 
     // ordenar las latitudes y longitudes
     for (int i = 0; i < graph.nodes.size(); i++)
@@ -89,10 +92,12 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
     // cout << "lats range from " << lats.begin()->first << " to " << lats.rbegin()->first << "\nlons range from " << lons.begin()->first << " to " << lons.rbegin()->first << endl;
 
     // Límites del plano (esto puede depender de tu grafo)
-    double lat_min = lats.begin()->first, lat_max = lats.rbegin()->first;
-    double lon_min = lons.begin()->first, lon_max = lons.rbegin()->first;
-    double delta_lat = lat_max - lat_min;
-    double delta_lon = lon_max - lon_min;
+    lat_min = lats.begin()->first;
+    lat_max = lats.rbegin()->first;
+    lon_min = lons.begin()->first;
+    lon_max = lons.rbegin()->first;
+    delta_lat = lat_max - lat_min;
+    delta_lon = lon_max - lon_min;
 
     // Inicialización de partículas
     vector<Particle> particles(num_particles);
@@ -114,9 +119,9 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
             particle.positions.push_back(interpolate({start_lat, start_lon}, {end_lat, end_lon}, ROUTE_BREAKPOINTS));
 
             // Velocidades iniciales aleatorias
-            double v1 = 0.3;
+            double v1 = 0.5;
             particle.velocities.push_back({});
-            for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+            for (int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
             {
                 particle.velocities[i].push_back({random_double(-v1, v1), random_double(-v1, v1)});
             }
@@ -142,16 +147,16 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
                 // cout << "        DEBUG 1.1 " << particle.positions.size()<< " " << number_of_routes << endl;
                 int start_node = pointToNode(particle.positions[i][0].first, particle.positions[i][0].second, graph);
                 // cout << "        DEBUG 1.2" << endl;
-                int end_node = pointToNode(particle.positions[i][ROUTE_BREAKPOINTS+1].first, particle.positions[i][ROUTE_BREAKPOINTS].second, graph);
-                
+                int end_node = pointToNode(particle.positions[i][ROUTE_BREAKPOINTS + 1].first, particle.positions[i][ROUTE_BREAKPOINTS].second, graph);
+
                 vector<int> stops;
-                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+                for (int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
                 {
                     stops.push_back(pointToNode(particle.positions[i][j].first, particle.positions[i][j].second, graph));
                 }
 
                 // cout << "        DEBUG 1.3 " << start_node << " " << end_node << endl;
-                Route route(graph, "route_"+to_string(i), stops, 5); //  = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
+                Route route(graph, "route_" + to_string(i), stops, 5); //  = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
                 // cout << "        DEBUG 1.4" << endl;
                 // double dist = sqrt( (pow( (particle.positions[i * 2].first - particle.positions[i * 2 + 1].first), 2) + pow( (particle.positions[i * 2].second - particle.positions[i * 2 + 1].second), 2)) );
 
@@ -166,9 +171,9 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
             if (routes.size() == number_of_routes)
             {
                 // Ejecutar simulación con las rutas generadas
-                vector<double>emp;
-                simulation S(routes, graph, people,emp);
-                double score = S.simulate() + routes_distance_heuristic*50;
+                vector<double> emp;
+                simulation S(routes, graph, people, emp);
+                double score = S.simulate() + routes_distance_heuristic * 50;
 
                 // Actualizar el mejor valor local de la partícula
                 if (score < particle.best_score)
@@ -189,7 +194,7 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
             // Actualizar la velocidad y posición de la partícula
             for (int i = 0; i < number_of_routes; ++i)
             {
-                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+                for (int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
                 {
                     // cout << "        DEBUG 3.1" << endl;
                     // Actualizar velocidad
@@ -238,25 +243,40 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
     return best_sim;
 }
 
-
-
 struct individual
 {
     vector<vector<pair<double, double>>> positions;
-    
+
     // score infinito por default
-    double score=numeric_limits<double>::infinity();
+    double score = numeric_limits<double>::infinity();
 
     void mutate(double mutation_rate)
     {
         for (int i = 0; i < positions.size(); ++i)
         {
-            for(int j = 0; j < positions[i].size(); ++j)
+            for (int j = 0; j < positions[i].size(); ++j)
             {
                 // Actualizar posición
                 positions[i][j].first += random_double(-mutation_rate, mutation_rate);
 
                 positions[i][j].second += random_double(-mutation_rate, mutation_rate);
+            }
+        }
+    }
+
+    void mutate(double mutation_rate, int mutation_prob)
+    {
+        for (int i = 0; i < positions.size(); ++i)
+        {
+            for (int j = 0; j < positions[i].size(); ++j)
+            {
+                if (random_double(0, 1) <= mutation_prob)
+                {
+                    // Actualizar posición
+                    positions[i][j].first += random_double(-mutation_rate, mutation_rate);
+
+                    positions[i][j].second += random_double(-mutation_rate, mutation_rate);
+                }
             }
         }
     }
@@ -267,7 +287,7 @@ struct individual
         {
             if (random_double(0, 1) < crossover_rate)
             {
-                for(int j = 0; j < positions[i].size(); ++j)
+                for (int j = 0; j < positions[i].size(); ++j)
                 {
                     // Cruzar posiciones
                     swap(positions[i][j], other.positions[i][j]);
@@ -284,6 +304,25 @@ struct individual
         return new_ind;
     }
 
+    void randomize()
+    {
+        for (int i = 0; i < positions.size(); ++i)
+        {
+            for (int j = 0; j < positions[i].size(); ++j)
+            {
+                // Generamos posiciones iniciales aleatorias para cada ruta
+
+                double start_lat = random_double(lat_min, lat_max);
+                double start_lon = random_double(lon_min, lon_max);
+                double end_lat = random_double(lat_min, lat_max);
+                double end_lon = random_double(lon_min, lon_max);
+
+                // Interpolamos puntos intermedios
+                positions[i] = interpolate({start_lat, start_lon}, {end_lat, end_lon}, ROUTE_BREAKPOINTS);
+            }
+        }
+    }
+
     // crear un criterio de comparación para ordenar los individuos
     bool operator<(const individual &other) const
     {
@@ -298,8 +337,16 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
     simulation best_sim;
 
     // Parámetros Algoritmo Genético
-    double mutation_rate = 0.08;
+    double mutation_rate = 0.05;
+    double mutation_prob = 0.3;
     double crossover_rate = 0.5;
+
+    int num_to_leave_untouched = 1;
+    int num_to_mutate = 0;
+    int num_to_crossover = 0;
+    int num_to_random = 50;
+
+    num_initial_population = num_to_leave_untouched + num_to_mutate + num_to_crossover + num_to_random;
 
     // ordenar las latitudes y longitudes
     for (int i = 0; i < graph.nodes.size(); i++)
@@ -311,10 +358,12 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
     // cout << "lats range from " << lats.begin()->first << " to " << lats.rbegin()->first << "\nlons range from " << lons.begin()->first << " to " << lons.rbegin()->first << endl;
 
     // Límites del plano (esto puede depender de tu grafo)
-    double lat_min = lats.begin()->first, lat_max = lats.rbegin()->first;
-    double lon_min = lons.begin()->first, lon_max = lons.rbegin()->first;
-    double delta_lat = lat_max - lat_min;
-    double delta_lon = lon_max - lon_min;
+    lat_min = lats.begin()->first;
+    lat_max = lats.rbegin()->first;
+    lon_min = lons.begin()->first;
+    lon_max = lons.rbegin()->first;
+    delta_lat = lat_max - lat_min;
+    delta_lon = lon_max - lon_min;
 
     // Inicialización de la población
     vector<individual> population(num_initial_population);
@@ -351,15 +400,15 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
             for (int i = 0; i < number_of_routes; ++i)
             {
                 int start_node = pointToNode(ind.positions[i][0].first, ind.positions[i][0].second, graph);
-                int end_node = pointToNode(ind.positions[i][ROUTE_BREAKPOINTS+1].first, ind.positions[i][ROUTE_BREAKPOINTS].second, graph);
-                
+                int end_node = pointToNode(ind.positions[i][ROUTE_BREAKPOINTS + 1].first, ind.positions[i][ROUTE_BREAKPOINTS].second, graph);
+
                 vector<int> stops;
-                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
+                for (int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
                 {
                     stops.push_back(pointToNode(ind.positions[i][j].first, ind.positions[i][j].second, graph));
                 }
 
-                Route route(graph, "route_"+to_string(i), stops, 5); //  = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
+                Route route(graph, "route_" + to_string(i), stops, 5); //  = create_route(graph, "route_" + to_string(i), start_node, end_node, 5);
 
                 if (route.nodes.size() > 0)
                 {
@@ -370,9 +419,9 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
             if (routes.size() == number_of_routes)
             {
                 // Ejecutar simulación con las rutas generadas
-                vector<double>emp;
+                vector<double> emp;
                 simulation S(routes, graph, people, emp);
-                double score = S.simulate() + routes_distance_heuristic*50;
+                double score = S.simulate() + routes_distance_heuristic * 50;
 
                 // Actualizar el mejor valor local del individuo
                 ind.score = score;
@@ -389,23 +438,28 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
             // Actualizar la población
             vector<individual> new_population;
             sort(population.begin(), population.end());
-            for (int i = 0; i < num_initial_population / 2; ++i)
+            for (int i = 0; i < num_to_leave_untouched; ++i)
             {
                 new_population.push_back(population[i].copy());
             }
-
-            for (int i = 0; i < num_initial_population / 2; ++i)
+            for (int i = 0; i < num_to_mutate; ++i)
             {
-                int parent1 = random_double(0, num_initial_population / 2);
-                int parent2 = random_double(0, num_initial_population / 2);
+                int base_ind = random_double(0, num_to_leave_untouched);
+                new_population.push_back(population[base_ind].copy());
+                new_population.back().mutate(mutation_rate, mutation_prob);
+            }
+            for (int i = 0; i < num_to_crossover; ++i)
+            {
+                int parent1 = random_double(0, num_to_leave_untouched);
+                int parent2 = random_double(0, num_to_leave_untouched);
                 new_population.push_back(population[parent1].copy());
                 new_population.back().crossover(population[parent2], crossover_rate);
-                // new_population.back().mutate(mutation_rate);
+                new_population.back().mutate(mutation_rate, mutation_prob);
             }
-
-            for (int i = 2; i < num_initial_population; ++i)
+            for (int i = 0; i < num_to_random; ++i)
             {
-                new_population[i].mutate(mutation_rate);
+                new_population.push_back(population[i].copy());
+                new_population.back().randomize();
             }
 
             population = new_population;
@@ -423,6 +477,3 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
 
     return best_sim;
 }
-
-
-

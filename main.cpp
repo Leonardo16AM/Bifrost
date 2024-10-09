@@ -6,7 +6,7 @@
 using namespace std;
 
 int BUSES = 100;
-int ROUTES = 10;
+int ROUTES = 1;
 int PERSONS = 10;
 
 // Función para validar y extraer los datos
@@ -31,10 +31,10 @@ int main(){
 
     LLMClient llm;
     string archivo = "nombre.csv";
-    int personas = 65;      //CHANGE DEFAULT
-    int rutas = 100;        //CHANGE DEFAULT
+    int personas = 50;      //CHANGE DEFAULT
+    int rutas = 5;        //CHANGE DEFAULT
     int iteraciones = 10;    //CHANGE DEFAULT
-    int particulas = 5;    //CHANGE DEFAULT
+    int particulas = 50;    //CHANGE DEFAULT
 
     try
     {
@@ -97,7 +97,7 @@ int main(){
     // if("nombre.csv"==archivo){
     //     auto start = chrono::high_resolution_clock::now();
     //     generate_people(people, graph, PERSONS);
-    //     best_sim = Optimize(graph, people, ROUTES,iteraciones,particulas); 
+    //     best_sim = Optimize(graph, people, ROUTES, iteraciones, particulas); 
     //     routes = best_sim.get_routes();
     //     auto end = chrono::high_resolution_clock::now();
     //     chrono::duration<double> elapsed = end - start;
@@ -114,42 +114,42 @@ int main(){
     
     // double BEST_RESULTS;
     
-    // // {
-    // //     cout << "STARTING TEST SIMULATIONS" << endl;
-    // //     BEST_RESULTS = best_sim.simulate();
-    // //     cout << "RESULTS: " << BEST_RESULTS << endl;
-    // // }
+    // {
+    //     cout << "STARTING TEST SIMULATIONS" << endl;
+    //     BEST_RESULTS = best_sim.simulate();
+    //     cout << "RESULTS: " << BEST_RESULTS << endl;
+    // }
 
 
 
 /*-------------------------- EVO SIMULATION --------------------------------------------------*/
-    cout << "STARTING OPTIMIZATION" << endl;
+        cout << "STARTING OPTIMIZATION" << endl;
 
 
-    simulation S,best_sim;
-    vector<Route> routes;
-    vector<Person> people;
-    
-    
-    if("nombre.csv"==archivo){
-        auto start = chrono::high_resolution_clock::now();
-        generate_people(people, graph, PERSONS);
-        best_sim = OptimizeEvo(graph, people, ROUTES, iteraciones, 10); 
-        routes = best_sim.get_routes();
-        auto end = chrono::high_resolution_clock::now();
-        chrono::duration<double> elapsed = end - start;
-        cout << "Training Time: " << elapsed.count() << " seconds" << endl;
-    }else{
-        cout << "LOADING FROM FILE" << endl;
-        S.load_simulation_from_csv(archivo);
-        routes = S.get_routes();
-        people = S.get_people();
-        vector<double>emp;
-        simulation best_sim(routes, graph, people,emp);
-        best_sim.save_simulation_to_csv("test.csv");
-    }
-    
-    double BEST_RESULTS;
+        simulation S,best_sim;
+        vector<Route> routes;
+        vector<Person> people;
+        
+        
+        if("nombre.csv"==archivo){
+            auto start = chrono::high_resolution_clock::now();
+            generate_people(people, graph, PERSONS);
+            best_sim = OptimizeEvo(graph, people, ROUTES, iteraciones, 50); 
+            routes = best_sim.get_routes();
+            auto end = chrono::high_resolution_clock::now();
+            chrono::duration<double> elapsed = end - start;
+            cout << "Training Time: " << elapsed.count() << " seconds" << endl;
+        }else{
+            cout << "LOADING FROM FILE" << endl;
+            S.load_simulation_from_csv(archivo);
+            routes = S.get_routes();
+            people = S.get_people();
+            vector<double>emp;
+            simulation best_sim(routes, graph, people,emp);
+            best_sim.save_simulation_to_csv("test.csv");
+        }
+        
+        double BEST_RESULTS;
 
 
 
