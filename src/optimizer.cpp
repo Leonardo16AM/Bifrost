@@ -243,7 +243,52 @@ simulation Optimize(Graph &graph, vector<Person> &people, int number_of_routes,i
 struct individual
 {
     vector<vector<pair<double, double>>> positions;
-    double score;
+    
+    // score infinito por default
+    double score=numeric_limits<double>::infinity();
+
+    void mutate(double mutation_rate)
+    {
+        for (int i = 0; i < positions.size(); ++i)
+        {
+            for(int j = 0; j < positions[i].size(); ++j)
+            {
+                // Actualizar posición
+                positions[i][j].first += random_double(-mutation_rate, mutation_rate);
+
+                positions[i][j].second += random_double(-mutation_rate, mutation_rate);
+            }
+        }
+    }
+
+    void crossover(individual &other, double crossover_rate)
+    {
+        for (int i = 0; i < positions.size(); ++i)
+        {
+            if (random_double(0, 1) < crossover_rate)
+            {
+                for(int j = 0; j < positions[i].size(); ++j)
+                {
+                    // Cruzar posiciones
+                    swap(positions[i][j], other.positions[i][j]);
+                }
+            }
+        }
+    }
+
+    individual copy()
+    {
+        individual new_ind;
+        new_ind.positions = positions;
+        new_ind.score = score;
+        return new_ind;
+    }
+
+    // crear un criterio de comparación para ordenar los individuos
+    bool operator<(const individual &other) const
+    {
+        return score < other.score;
+    }
 };
 
 // Optimizacion con Algoritmo genético
@@ -253,7 +298,7 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
     simulation best_sim;
 
     // Parámetros Algoritmo Genético
-    double mutation_rate = 0.1;
+    double mutation_rate = 0.08;
     double crossover_rate = 0.5;
 
     // ordenar las latitudes y longitudes
@@ -341,25 +386,29 @@ simulation OptimizeEvo(Graph &graph, vector<Person> &people, int number_of_route
                 }
             }
 
-            // Actualizar la velocidad y posición de la partícula
-            for (int i = 0; i < number_of_routes; ++i)
+            // Actualizar la población
+            vector<individual> new_population;
+            sort(population.begin(), population.end());
+            for (int i = 0; i < num_initial_population / 2; ++i)
             {
-                for(int j = 0; j < ROUTE_BREAKPOINTS + 2; ++j)
-                {
-                    // Actualizar posición
-                    ind.positions[i][j].first += random_double(-mutation_rate, mutation_rate);
-                    if (ind.positions[i][j].first > lat_max)
-                        ind.positions[i][j].first = lat_max;
-                    if (ind.positions[i][j].first < lat_min)
-                        ind.positions[i][j].first = lat_min;
-
-                    ind.positions[i][j].second += random_double(-mutation_rate, mutation_rate);
-                    if (ind.positions[i][j].second > lon_max)
-                        ind.positions[i][j].second = lon_max;
-                    if (ind.positions[i][j].second < lon_min)
-                        ind.positions[i][j].second = lon_min;
-                }
+                new_population.push_back(population[i].copy());
             }
+
+            for (int i = 0; i < num_initial_population / 2; ++i)
+            {
+                int parent1 = random_double(0, num_initial_population / 2);
+                int parent2 = random_double(0, num_initial_population / 2);
+                new_population.push_back(population[parent1].copy());
+                new_population.back().crossover(population[parent2], crossover_rate);
+                // new_population.back().mutate(mutation_rate);
+            }
+
+            for (int i = 2; i < num_initial_population; ++i)
+            {
+                new_population[i].mutate(mutation_rate);
+            }
+
+            population = new_population;
         }
 
         // imprimir el mejor resultado hasta ahora
